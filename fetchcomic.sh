@@ -15,7 +15,6 @@ fi
 DATE=$(date +'%Y/%m/%d')
 comicurl=https://www.gocomics.com/$COMIC/$DATE
 
-rm $COMIC.png
 # fetch comic page and get the URL for the image
 echo "fetching $comicurl"
 wget -q -O source $comicurl
