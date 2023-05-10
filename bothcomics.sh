@@ -1,3 +1,4 @@
+cd /home/jack/src/kindle/
 ./fetchcomic.sh
 ./fetchcomic.sh -g
 ./date.sh
