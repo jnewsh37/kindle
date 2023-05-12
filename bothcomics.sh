@@ -1,8 +1,11 @@
-cd /home/jack/src/kindle/
+
+DIR=$(dirname $0)
+cd $DIR
+
 ./fetchcomic.sh
 ./fetchcomic.sh -g
 ./date.sh
-rm joinedcomics.png
+rm -f joinedcomics.png
 convert +append Date.png garfield.png bignate.png joinedcomics.png 
 echo "removing unneeded files..."
 rm bignate.png
