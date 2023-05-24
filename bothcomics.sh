@@ -1,4 +1,4 @@
-
+echo "I am $(whoami) $(id)"
 DIR=$(dirname $0)
 cd $DIR
 
@@ -6,7 +6,7 @@ cd $DIR
 ./fetchcomic.sh -g
 ./date.sh
 rm -f joinedcomics.png
-convert +append Date.png garfield.png bignate.png joinedcomics.png 
+convert +append dateweather.png garfield.png bignate.png joinedcomics.png 
 echo "removing unneeded files..."
 rm bignate.png
 rm garfield.png
