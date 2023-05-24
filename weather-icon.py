@@ -16,19 +16,13 @@ except ImportError:
     # Python 2
     from urllib2 import urlopen
 
-#
 # Geographic location
-#
+
 
 latitude = 21.3337
 longitude = -158.0824
 
-
-
-
-#
 # Download and parse weather data
-#
 
 # Fetch data (change lat and lon to desired location)
 weather_xml = urlopen('http://graphical.weather.gov/xml/SOAP_server/ndfdSOAPclientByDay.php?whichClient=NDFDgenByDay&lat=' + str(latitude) + '&lon=' + str(longitude) + '&format=24+hourly&numDays=4&Unit=e').read()
@@ -58,9 +52,7 @@ for i in range(len(xml_icons)):
 xml_day_one = dom.getElementsByTagName('start-valid-time')[0].firstChild.nodeValue[0:10]
 day_one = datetime.datetime.strptime(xml_day_one, '%Y-%m-%d')
 
-#
 # Preprocess SVG
-#
 
 # Open SVG to process
 output = codecs.open('weather-script-preprocess.svg', 'r', encoding='utf-8').read()
