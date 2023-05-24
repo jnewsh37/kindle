@@ -1,9 +1,17 @@
 DATE=$(date +'%m/%d/%Y')
-convert -size 800x147 xc:transparent \
+#gets the icon for the current weather and resizes it
+./weather-icon.py
+convert weather-icon.svg \
+	-rotate 270 \
+	-resize 147x200 \
+	weather-icon.png
+rm weather-icon.svg
+
+convert -size 642x147 xc:transparent \
 	-font Palatino-Bold \
-	-pointsize 150 \
+	-pointsize 130 \
 	-fill black \
-	-draw "text 55,125 '${DATE}'" \
+	-draw "text 35,115 '${DATE}'" \
 	date.png
 
 convert date.png \
@@ -11,5 +19,5 @@ convert date.png \
 	-background "#FFFFFF" \
 	-flatten \
         Date.png
-
+convert -append Date.png weather-icon.png dateweather.png
 rm date.png
