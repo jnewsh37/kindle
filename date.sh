@@ -21,3 +21,4 @@ convert date.png \
         Date.png
 convert -append Date.png weather-icon.png dateweather.png
 rm date.png
+rm weather-icon.png
