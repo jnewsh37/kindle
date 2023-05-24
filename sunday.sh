@@ -1,3 +1,5 @@
+DIR=$(dirname $0)
+cd $DIR
 ./fetchcomic.sh
 ./datesunday.sh
 rm joinedcomics.png
