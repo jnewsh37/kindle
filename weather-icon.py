@@ -1,9 +1,8 @@
 #!/usr/bin/python2
 
-# Original script from:
-# Kindle Weather Display
-# Matthew Petroff (http://mpetroff.net/)
-# September 2012
+# This is a modified version of a file that is
+# Copyright (c) 2012 Matthew Petroff
+# Original: https://github.com/mpetroff/kindle-weather-display/
 
 # I have modified this script to make it only output the weather 
 
@@ -58,8 +57,6 @@ for i in range(len(xml_icons)):
 # Parse dates
 xml_day_one = dom.getElementsByTagName('start-valid-time')[0].firstChild.nodeValue[0:10]
 day_one = datetime.datetime.strptime(xml_day_one, '%Y-%m-%d')
-
-
 
 #
 # Preprocess SVG
