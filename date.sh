@@ -5,14 +5,17 @@ cd $DIR
 
 #gets the icon for the current weather and resizes it
 
-./weather-icon.py
+python3 weather-icon.py
+
 convert weather-icon.svg \
 	-rotate 270 \
 	-resize 147x200 \
         -define png:color-type=0 \
         -define png:bit-depth=8 \
 	weather-icon.png
+
 rm weather-icon.svg
+
 convert -size 642x147 xc:transparent \
 	-font Palatino-Bold \
 	-pointsize 130 \
