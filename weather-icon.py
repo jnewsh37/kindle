@@ -1,4 +1,4 @@
-#!/usr/bin/python2
+#!/usr/bin/python3
 
 # This is a modified version of a file that is
 # Copyright (c) 2012 Matthew Petroff
@@ -19,8 +19,8 @@ except ImportError:
 # Geographic location
 
 
-latitude = 21.3337
-longitude = -158.0824
+latitude = 21.3344
+longitude = -158.0654
 
 # Download and parse weather data
 
