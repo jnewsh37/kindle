@@ -19,9 +19,7 @@ comicurl=https://www.gocomics.com/$COMIC/$DATE
 echo "fetching $comicurl"
 wget -q -O source $comicurl
 var=$(cat source|grep -m 1 'content="https://assets.amuniversal.com/')
-echo $var
 var=${var:35}
-echo $var
 imgurl=$(echo $var|cut -c 1-63)
 
 # fetch the comic image
