@@ -6,7 +6,7 @@ cd $DIR
 ./getcomic.sh -g $1
 ./choosedate.sh $1
 rm -f joinedcomics.png
-convert +append Date.png garfield.png bignate.png joinedcomics.png 
+convert +append garfield.png bignate.png Date.png joinedcomics.png 
 echo "removing unneeded files..."
 rm bignate.png
 rm garfield.png
