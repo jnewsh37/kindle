@@ -1,4 +1,4 @@
-DATE=$(date +'%m/%d/%Y')
+¬DATE=$(date +'%m/%d/%Y')
 
 DIR=$(dirname $0)
 cd $DIR
