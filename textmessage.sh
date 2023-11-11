@@ -4,6 +4,7 @@ convert -background white \
         -font Palatino-Bold \
         -pointsize 36 \
         -size 624x147 \
+	-gravity Center \
         caption:" $message" \
 	-rotate 270 \
         messagetext.png
