@@ -5,5 +5,6 @@ convert -background white \
         -pointsize 36 \
         -size 624x147 \
         caption:" $message" \
+	-rotate 270 \
         messagetext.png
 
