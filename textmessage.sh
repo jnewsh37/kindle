@@ -8,3 +8,5 @@ convert -background white \
 	-rotate 270 \
         messagetext.png
 
+scp -q messagetext.png kindle:. 2> /dev/null
+ssh kindle "/usr/sbin/eips -g ./messagetext.png" 2> /dev/null
