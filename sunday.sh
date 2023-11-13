@@ -14,7 +14,8 @@ convert $COMIC.png \
 	-resize 530x800 \
 	$COMIC.png
 convert +append -gravity center Date2.png $COMIC.png joinedcomics.png 
-convert j
+COMIC=bignate
+convert -rotate 90 joinedcomics.png joinedcomics.png
 rm $COMIC.png
 rm Date2.png
 # send it to the kindle and display it
