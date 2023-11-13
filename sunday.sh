@@ -1,13 +1,21 @@
 DIR=$(dirname $0)
 cd $DIR
-./fetchcomic.sh
+COMIC=bignate
+if [ "x$1" = "x-b" ] ; then
+        COMIC=bignate
+fi
+if [ "x$1" = "x-g" ] ; then
+        COMIC=garfield
+fi
+./fetchcomic.sh $1
 ./datesunday.sh
 rm joinedcomics.png
-convert bignate.png \
+convert $COMIC.png \
 	-resize 530x800 \
-	bignate.png
-convert +append -gravity center Date2.png bignate.png joinedcomics.png 
-rm bignate.png
+	$COMIC.png
+convert +append -gravity center Date2.png $COMIC.png joinedcomics.png 
+convert j
+rm $COMIC.png
 rm Date2.png
 # send it to the kindle and display it
 echo "sending to kindle..."

@@ -6,7 +6,6 @@ convert -background white \
         -size 624x147 \
 	-gravity Center \
         caption:" $message" \
-	-rotate 270 \
         messagetext.png
 
 scp -q messagetext.png kindle:. 2> /dev/null

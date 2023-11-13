@@ -8,6 +8,7 @@ cd $DIR
 rm -f joinedcomics.png
 convert +append dateweather.png garfield.png bignate.png joinedcomics.png 
 convert +append chargekindleicon.png garfield.png bignate.png comicscharge.png
+convert -rotate 90 joinedcomics.png joinedcomics.png
 echo "removing unneeded files..."
 rm bignate.png
 rm garfield.png
