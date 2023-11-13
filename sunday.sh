@@ -1,3 +1,4 @@
+
 DIR=$(dirname $0)
 cd $DIR
 COMIC=bignate
@@ -11,10 +12,9 @@ fi
 ./datesunday.sh
 rm joinedcomics.png
 convert $COMIC.png \
-	-resize 800x453 \
+	-resize 530x800 \
 	$COMIC.png
 convert +append -gravity center Date2.png $COMIC.png joinedcomics.png 
-COMIC=bignate
 convert -rotate 90 joinedcomics.png joinedcomics.png
 convert $COMIC.png -rotate 90 -resize 800x453 alt.png
 convert -append -gravity center blankstrip.png alt.png alt.png
