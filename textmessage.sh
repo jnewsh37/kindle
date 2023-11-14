@@ -6,6 +6,8 @@ convert -background white \
         -size 800x147 \
 	-gravity Center \
         caption:" $message" \
+	-define png:color-type=0 \
+        -define png:bit-depth=8 \
         messagetext.png
 
 scp -q messagetext.png kindle:. 2> /dev/null
