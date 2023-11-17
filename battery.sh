@@ -1,6 +1,6 @@
 ssh kindle 'cd /; 
-  rm /mnt/us/documents/all_*; 
-  rm /mnt/us/documents/wininfo*; 
+  rm -r /mnt/us/documents/all_*; 
+  rm -r /mnt/us/documents/wininfo*; 
   ./usr/bin/dm.sh >/dev/null 2>/dev/null; 
   cd /mnt/us/documents; 
   batteryinfovar=$(grep "battinfo" all_system_logs* | tail -1); 
