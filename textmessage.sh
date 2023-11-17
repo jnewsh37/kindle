@@ -4,7 +4,7 @@ convert -background white \
         -fill black  \
         -font Palatino-Bold \
         -pointsize 36 \
-        -size 690x147 \
+        -size 700x147 \
         -gravity Center \
         caption:" $message" \
         -define png:color-type=0 \
