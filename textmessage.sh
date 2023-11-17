@@ -1,5 +1,5 @@
 cd `dirname $0`
-message="$(echo $1|cut  -c 1-100)"
+message="$(echo $1|cut  -c 1-125)"
 convert -background white \
         -fill black  \
         -font Palatino-Bold \
