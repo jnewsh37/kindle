@@ -6,7 +6,6 @@ echo "Converting"
 convert $1 \
         -rotate 270 \
         -filter LanczosSharp \
-        -resize 600x800 \
         -background white \
         -gravity center \
         -colorspace Gray \
