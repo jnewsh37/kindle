@@ -1,15 +1,16 @@
 echo "I am $(whoami) $(id)"
 DIR=$(dirname $0)
+DATE=$(date +'%Y.%m.%d')
 cd $DIR
 
 ./fetchcomic.sh $1
 ./fetchcomic.sh $2
 ./date.sh
 rm -f joinedcomics.png
-convert +append dateweather.png $1.png $2.png joinedcomics.png 
+convert +append dateweather.png $1.png $2.png joinedcomics.png
 #convert +append chargekindleicon.png garfield.png bignate.png comicscharge.png
 convert -rotate 90 joinedcomics.png joinedcomics.png
-echo "removing unneeded files..."
+echo "saving comics to disk..."
 mv ../Comics/*.png ../Comics/Vault/
 mv bignate.png ../Comics/mkindle/"$1$DATE".png
 mv garfield.png ../Comics/mkindle/"$2$DATE".png
