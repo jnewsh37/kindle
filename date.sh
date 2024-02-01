@@ -9,7 +9,7 @@ python3 weather-icon.py
 
 convert weather-icon.svg \
 	-rotate 270 \
-	-resize 119x200 \
+	-resize 147x200 \
         -define png:color-type=0 \
         -define png:bit-depth=8 \
 	weather-icon.png
