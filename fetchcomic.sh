@@ -5,13 +5,7 @@
 #
 
 COMIC=bignate
-if [ "x$1" = "x-b" ] ; then
-	COMIC=bignate
-fi
-if [ "x$1" = "x-g" ] ; then
-	COMIC=garfield
-fi
-
+COMIC=$1
 DATE=$(date +'%Y/%m/%d')
 comicurl=https://www.gocomics.com/$COMIC/$DATE
 

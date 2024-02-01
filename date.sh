@@ -9,18 +9,18 @@ python3 weather-icon.py
 
 convert weather-icon.svg \
 	-rotate 270 \
-	-resize 147x200 \
+	-resize 119x200 \
         -define png:color-type=0 \
         -define png:bit-depth=8 \
 	weather-icon.png
 
 rm weather-icon.svg
 
-convert -size 642x147 xc:transparent \
+convert -size 642x119 xc:transparent \
 	-font Palatino-Bold \
 	-pointsize 130 \
 	-fill black \
-	-draw "text 25,115 '${DATE}'" \
+	-draw "text 25,100 '${DATE}'" \
 	date.png
 
 convert date.png \
