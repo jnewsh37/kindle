@@ -16,11 +16,11 @@ convert weather-icon.svg \
 
 rm weather-icon.svg
 
-convert -size 642x119 xc:transparent \
+convert -size 642x147 xc:transparent \
 	-font Palatino-Bold \
 	-pointsize 130 \
 	-fill black \
-	-draw "text 25,100 '${DATE}'" \
+	-draw "text 25,147 '${DATE}'" \
 	date.png
 
 convert date.png \
