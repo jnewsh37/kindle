@@ -20,7 +20,7 @@ convert -size 642x147 xc:transparent \
 	-font Palatino-Bold \
 	-pointsize 130 \
 	-fill black \
-	-draw "text 25,147 '${DATE}'" \
+	-draw "text 25,115 '${DATE}'" \
 	date.png
 
 convert date.png \
