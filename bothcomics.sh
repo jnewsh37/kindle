@@ -1,5 +1,6 @@
 echo "I am $(whoami) $(id)"
 DIR=$(dirname $0)
+DATE=$(date +'%Y.%m.%d')
 cd $DIR
 
 ./fetchcomic.sh
@@ -10,8 +11,10 @@ convert +append dateweather.png garfield.png bignate.png joinedcomics.png
 convert +append chargekindleicon.png garfield.png bignate.png comicscharge.png
 convert -rotate 90 joinedcomics.png joinedcomics.png
 echo "removing unneeded files..."
-rm bignate.png
-rm garfield.png
+mv ../Comics/*.png ../Comics/Vault/
+mv bignate.png ../Comics/"bignate$DATE".png
+mv garfield.png ../Comics/"garfield$DATE".png
+cp joinedcomics.png ../Comics/"comics$DATE".png
 rm Date.png
 # send it to the kindle and display it
 echo "sending to kindle..."
