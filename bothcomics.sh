@@ -12,8 +12,8 @@ convert +append dateweather.png $1.png $2.png joinedcomics.png
 convert -rotate 90 joinedcomics.png joinedcomics.png
 echo "saving comics to disk..."
 mv ../Comics/kindle/*.png ../Comics/kindle/Vault/
-mv bignate.png ../Comics/kindle/"$1$DATE".png
-mv garfield.png ../Comics/kindle/"$2$DATE".png
+mv $1.png ../Comics/kindle/"$1$DATE".png
+mv $2.png ../Comics/kindle/"$2$DATE".png
 cp joinedcomics.png ../Comics/kindle/"comics$DATE".png
 rm Date.png
 # send it to the kindle and display it
