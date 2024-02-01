@@ -10,6 +10,7 @@ rm -f joinedcomics.png
 convert +append dateweather.png $1.png $2.png joinedcomics.png
 #convert +append chargekindleicon.png garfield.png bignate.png comicscharge.png
 convert -rotate 90 joinedcomics.png joinedcomics.png
+<<<<<<< HEAD
 echo "saving comics to disk..."
 mv ../Comics/*.png ../Comics/Vault/
 mv bignate.png ../Comics/mkindle/"$1$DATE".png
