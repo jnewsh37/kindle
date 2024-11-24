@@ -15,7 +15,7 @@ rm $COMIC.png
 rm Date2.png
 # send it to the kindle and display it
 echo "sending to kindle..."
-scp -q joinedcomics.png mkindle:. 2> /dev/null
-scp -q alt.png mkindle:. 2> /dev/null
-ssh mkindle "/usr/sbin/eips -c; sleep 1; /usr/sbin/eips -vg ./joinedcomics.png; sleep 1; /usr/sbin/eips -g ./joinedcomics.png" 2> /dev/null
+scp -q joinedcomics.png kindle:. 2> /dev/null
+scp -q alt.png kindle:. 2> /dev/null
+ssh kindle "/usr/sbin/eips -c; sleep 1; /usr/sbin/eips -vg ./joinedcomics.png; sleep 1; /usr/sbin/eips -g ./joinedcomics.png" 2> /dev/null
 echo "done"
