@@ -16,7 +16,8 @@ convert $1 \
         $name.png
 
 echo "sending to kindle..."
-scp -q $name.png mkindle:. 2> /dev/null
-ssh mkindle "/usr/sbin/eips -c; /usr/sbin/eips -g ./$name.png" 2> /dev/null
+scp -q $name.png kindle2:. 2> /dev/null
+ssh kindle2 "/usr/sbin/eips -c; /usr/sbin/eips -g ./$name.png" 2> /dev/null
 rm $name.png
+
 

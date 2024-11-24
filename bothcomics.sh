@@ -1,6 +1,7 @@
 echo "I am $(whoami) $(id)"
 DIR=$(dirname $0)
 DATE=$(date +'%Y.%m.%d')
+KINDLE=$3
 cd $DIR
 
 ./fetchcomic.sh $1
@@ -18,6 +19,6 @@ cp joinedcomics.png ../Comics/kindle/"comics$DATE".png
 rm Date.png
 # send it to the kindle and display it
 echo "sending to kindle..."
-scp -q joinedcomics.png kindle:. 2> /dev/null
-ssh kindle "/usr/sbin/eips -c; sleep 1; /usr/sbin/eips -vg ./joinedcomics.png; sleep 1; /usr/sbin/eips -g ./joinedcomics.png" 2> /dev/null
+scp -q joinedcomics.png $KINDLE:. 2> /dev/null
+ssh $KINDLE "/usr/sbin/eips -c; sleep 1; /usr/sbin/eips -vg ./joinedcomics.png; sleep 1; /usr/sbin/eips -g ./joinedcomics.png" 2> /dev/null
 echo "done"

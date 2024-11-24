@@ -4,7 +4,7 @@ name=$2
 #make padding
 
 #format pic
-convert $1 \
+magick $1 \
         -filter LanczosSharp \
         -background white \
         -gravity center \
@@ -15,10 +15,10 @@ convert $1 \
         -define png:bit-depth=8 \
         pfpic.png
 
-convert pfpic.png -resize 95x95 pfpic.png
+magick pfpic.png -resize 95x95 pfpic.png
 
 #format name
-convert -background white \
+magick -background white \
         -fill black  \
         -font Palatino-Bold \
         -pointsize 19 \
@@ -27,11 +27,11 @@ convert -background white \
         caption:" $name" \
         name.png
 	
-convert \
+magick \
 	-background white \
+        pfpic.png name.png \
 	-append \
 	-gravity Center \
-	pfpic.png name.png \
         -filter LanczosSharp \
         -background white \
         -colorspace Gray \
