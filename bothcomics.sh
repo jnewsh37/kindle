@@ -5,12 +5,16 @@ KINDLE=$3
 cd $DIR
 
 ./fetchcomic.sh $1
+SIZE1=$(identify $1.png|cut -d" " -f3|cut -d"x" -f2)
 ./fetchcomic.sh $2
-./date.sh
+SIZE2=$(identify $2.png|cut -d" " -f3|cut -d"x" -f2)
+echo "Sizes:" $SIZE1 $SIZE2
+echo $((600-$SIZE2-$SIZE1))
+./date.sh $((600-$SIZE2-$SIZE1))
 rm -f joinedcomics.png
-convert +append dateweather.png $1.png $2.png joinedcomics.png
+convert -append dateweather.png $1.png $2.png joinedcomics.png
 #convert +append chargekindleicon.png garfield.png bignate.png comicscharge.png
-convert -rotate 90 joinedcomics.png joinedcomics.png
+#convert -rotate 90 joinedcomics.png joinedcomics.png
 echo "saving comics to disk..."
 mv ../Comics/kindle/*.png ../Comics/kindle/Vault/
 mv $1.png ../Comics/kindle/"$1$DATE".png

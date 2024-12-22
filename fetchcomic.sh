@@ -23,9 +23,8 @@ rm source
 
 # convert the picture to a format that the kindle likes best
 convert comic.png \
-	-rotate 270 \
 	-filter LanczosSharp \
-	-resize 600x800 \
+	-resize 800x800 \
 	-background white \
 	-gravity center \
 	-colorspace Gray \

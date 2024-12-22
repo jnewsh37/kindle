@@ -8,15 +8,14 @@ cd $DIR
 python3 weather-icon.py
 
 convert weather-icon.svg \
-	-rotate 270 \
-	-resize 147x200 \
+	-resize 158x$1 \
         -define png:color-type=0 \
         -define png:bit-depth=8 \
 	weather-icon.png
 
 rm weather-icon.svg
 
-convert -size 642x147 xc:transparent \
+convert -size 642x$1 xc:transparent \
 	-font Palatino-Bold \
 	-pointsize 130 \
 	-fill black \
@@ -24,11 +23,10 @@ convert -size 642x147 xc:transparent \
 	date.png
 
 convert date.png \
-        -rotate 270 \
 	-background "#FFFFFF" \
 	-flatten \
         Date.png
 
-convert -append Date.png weather-icon.png dateweather.png
+convert +append weather-icon.png Date.png dateweather.png
 rm date.png
-rm weather-icon.png
+#rm weather-icon.png
