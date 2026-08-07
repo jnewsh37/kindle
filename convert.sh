@@ -15,9 +15,8 @@ convert $1 \
         -define png:bit-depth=8 \
         $name.png
 
-echo "sending to kindle..."
-scp -q $name.png kindle2:. 2> /dev/null
-ssh kindle2 "/usr/sbin/eips -c; /usr/sbin/eips -g ./$name.png" 2> /dev/null
-rm $name.png
 
-
+#echo "sending to kindle..."
+#scp -q $name.png kindle2:. 2> /dev/null
+#ssh kindle2 "/usr/sbin/eips -c; /usr/sbin/eips -g ./$name.png" 2> /dev/null
+#rm $name.png

@@ -17,9 +17,8 @@ comicurl=https://www.gocomics.com/$COMIC/$2
 # fetch comic page and get the URL for the image
 echo "fetching $comicurl"
 wget -q -O source $comicurl
-var=$(cat source|grep -m 1 'content="https://assets.amuniversal.com/')
-var=${var:35}
-imgurl=$(echo $var|cut -c 1-63)
+var=$(cat source|grep -m 1 'content="https://featureassets.gocomics.com/assets/')
+imgurl=$(echo $var|cut -c 6135-6208)
 
 # fetch the comic image
 echo "fetching $imgurl"
