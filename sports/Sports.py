@@ -34,9 +34,43 @@ for g in gamelist:
 	tmp=gamenames[gamelist.index(g)]
 #	print(tmp)
 	games[g] = game(gamelist.index(g), tmp)
-spacing = 5
 print(games["401816428"].getScore())
-old = ""
-while True:
-	runCommand('ssh', 'kindle', f'/usr/sbin/eips {spacing} {spacing} "{games["401816428"].getScore()}"; /usr/sbin/eips {spacing} {spacing+1} "{games["401816428"].getLastPlay()}"; /usr/sbin/eips {spacing} {spacing+2} "{games["401816428"].getCount()}"')
-	runCommand('curl', "https://site.api.espn.com/apis/site/v2/sports/baseball/mlb/scoreboard", '--output', 'mlb.txt')
+writeQueue = []
+def addToQueue(line, row, info):
+	toAppend = f'/usr/sbin/eips {row} {line} "{info}"'
+	writeQueue.append(toAppend)
+runCommand('curl', "https://site.api.espn.com/apis/site/v2/sports/baseball/mlb/scoreboard", '--output', 'mlb.txt')
+runCommand('ssh', 'kindle', '/usr/sbin/eips', '-fc')
+
+spacing = 5
+yspacing = 3
+
+for i in range(5):
+	addToQueue((yspacing + i*spacing), 3, f'{games[f"{gamelist[i]}"].getScore()}')
+	addToQueue((yspacing+1 + i*spacing), 3, f'{games[f"{gamelist[i]}"].getCount()}')
+	print(gamelist[i])
+	pbp = games[f"{gamelist[i]}"].getLastPlay()
+	if (len(pbp) > 26):
+		pbp1 = pbp[:(pbp.rfind(' ', 0, 26))]
+		pbp2 = pbp[(len(pbp1)+1):]
+		addToQueue((yspacing+2 + i*spacing), 3, ("  " + pbp1))
+		addToQueue((yspacing+3 + i*spacing), 3, ("  " + pbp2))
+	else:
+		addToQueue((yspacing+2 + i*spacing), 3, f'  {games[f"{gamelist[i]}"].getLastPlay()}')
+
+for i in range(5):
+	addToQueue((yspacing + i*spacing), 35, f'{games[f"{gamelist[i+3]}"].getScore()}')
+	addToQueue((yspacing+1 + i*spacing), 35, f'{games[f"{gamelist[i+3]}"].getCount()}')
+	print(gamelist[i])
+	pbp = games[f"{gamelist[i+3]}"].getLastPlay()
+	if (len(pbp) > 26):
+			pbp1 = pbp[:(pbp.rfind(' ', 0, 26))]
+			pbp2 = pbp[(len(pbp1)+1):]
+			addToQueue((yspacing+2 + i*spacing), 35, ("  " + pbp1))
+			addToQueue((yspacing+3 + i*spacing), 35, ("  " + pbp2))
+	else:	
+			addToQueue((yspacing+2 + i*spacing), 35, f'  {games[f"{gamelist[i+3]}"].getLastPlay()}')
+	
+runCommand('ssh', 'kindle', ";".join(writeQueue))
+runCommand('curl', "https://site.api.espn.com/apis/site/v2/sports/baseball/mlb/scoreboard", '--output', 'mlb.txt')
+writeQueue = []
