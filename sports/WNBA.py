@@ -118,7 +118,7 @@ def renderStats(x, y, g, t, cvs):
 			num2 = int(statValue[statValue.find("-")+1:])
 			print(f'{num1}/{num2}')
 			fontSize(18)
-			draw.text((x + spacing, y + (row * 85) + 55), f'{int((num1/num2)*100)}%', font=font)
+			draw.text((x + spacing, y + (row * 85) + 55), f'{int((num1/num2)*1000)/10}%', font=font)
 		statLen = len(statValue) if len(statValue) > 2 else 2
 		spacing += ((statLen * 14) + 20)
 		if (i == 4):
@@ -211,6 +211,7 @@ def renderImage(g):
 
 	screen.save("testrender.png")
 
+runCommand('ssh', 'kindle2', '/usr/sbin/eips -fc')
 while True:
 	renderImage(0)
 	runCommand("scp", "testrender.png", "kindle2:~/")
