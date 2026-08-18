@@ -13,19 +13,21 @@ def runCommand(program, *params):
 
 event = []
 stats = []
+leaders = []
 
 def refreshData():
 #	runCommand("curl", "https://site.api.espn.com/apis/site/v2/sports/basketball/wnba/scoreboard", "--output", wnba)
-	global event, stats
+	global event, stats, leaders
 	stats.clear()
 	with open(wnba) as f:
 		data = json.load(f)
 	event = data["events"]
 	for g in event:
 		id = g["id"]
-		runCommand("curl", f'https://site.api.espn.com/apis/site/v2/sports/basketball/wnba/summary?event={id}', "--output", f'{id}.txt')
+#		runCommand("curl", f'https://site.api.espn.com/apis/site/v2/sports/basketball/wnba/summary?event={id}', "--output", f'{id}.txt')
 		with open(f'{id}.txt') as s:
 			sdata = json.load(s)
+		leaders.append(sdata["leaders"])
 		sdata = sdata["boxscore"]
 		stats.append(sdata)
 
@@ -124,8 +126,16 @@ def renderStats(x, y, g, t, cvs):
 			spacing = 0
 
 
-def renderLeaders(x, y, t):
-	return ""
+def renderLeaders(x, y, g, t, cvs):
+	tNum = 1-t
+	l = leaders[g][tNum]["leaders"]
+	draw = ImageDraw.Draw(cvs)
+	statsToRender = ["pts", "ast", "reb"]
+	for i in range(len(statsToRender)):
+		fontSize(26)
+		draw.text((x, y + 32*i), (f'{l[i]["leaders"][0]["athlete"]["fullName"]} • {l[i]["leaders"][0]["athlete"]["position"]["abbreviation"]}: {int(l[i]["leaders"][0]["value"])} {statsToRender[i]}'), font=font)
+
+
 
 def renderImage(g):
 	global font
@@ -155,11 +165,11 @@ def renderImage(g):
 	fontSize(25)
 	draw.text((400, 30), event[g]["competitions"][0]["status"]["type"]["shortDetail"], font=font, align="center", anchor="mm")
 	fontSize(35)
-	draw.text((400,125), game.getScore(g), font=font, align="center", anchor="mm")
+	draw.text((400,120), game.getScore(g), font=font, align="center", anchor="mm")
 
 	#Latest play
 	#Play info
-	yCoord = 155
+	yCoord = 150
 	play, player, team = game.getLastPlay(g)
 	fontSize(24)
 	if (play != "Game not active"):
@@ -195,6 +205,9 @@ def renderImage(g):
 	#Team stats
 	renderStats(30, 275, g, 0, screen)
 	renderStats(430, 275, g, 1, screen)
+	#Tema leaders
+	renderLeaders(30, 465, g, 0, screen)
+	renderLeaders(430, 465, g, 1, screen)
 
 	screen.save("testrender.png")
 
