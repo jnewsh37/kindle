@@ -2,7 +2,7 @@
 import subprocess, time, json, sys
 from PIL import Image, ImageDraw, ImageFont
 
-wnba = "wnba.txt"
+wnba = "testWNBA.txt"
 font = ImageFont.truetype("/System/Library/Fonts/Supplemental/Arial.ttf", 1)
 
 def runCommand(program, *params):
@@ -15,7 +15,7 @@ leaders = []
 awayIndex = []
 
 def refreshData():
-	runCommand("curl", "https://site.api.espn.com/apis/site/v2/sports/basketball/wnba/scoreboard", "--output", wnba)
+#	runCommand("curl", "https://site.api.espn.com/apis/site/v2/sports/basketball/wnba/scoreboard", "--output", wnba)
 	global event, stats, leaders, awayIndex
 	stats.clear()
 	leaders.clear()
@@ -25,7 +25,7 @@ def refreshData():
 	e = 0
 	for g in event:
 		id = g["id"]
-		runCommand("curl", f'https://site.api.espn.com/apis/site/v2/sports/basketball/wnba/summary?event={id}', "--output", f'{id}.txt')
+#		runCommand("curl", f'https://site.api.espn.com/apis/site/v2/sports/basketball/wnba/summary?event={id}', "--output", f'{id}.txt')
 		with open(f'{id}.txt') as s:
 			sdata = json.load(s)
 		leaders.append(sdata["leaders"])
@@ -75,17 +75,17 @@ def pasteImage(x, y, size, cvs, url):
 		img = img.resize((size,size))
 		cvs.paste(img, (x, y), img)
 
-def pbpIcon(x, y, size, cvs, url):
+def pbpIcon(x, y, size, cvs, url, width, fill):
 	runCommand("curl", url, "--output", "tmp.png")
 	with Image.open("tmp.png") as img:
-		background = Image.new("L", (size, size), 180)
+		background = Image.new("L", (size, size), fill)
 		ar = img.width/img.height
 		img = img.resize((int(size*ar),size))
 		mask = Image.new("L", background.size, 0)
 		maskDraw = ImageDraw.Draw(mask)
 		maskDraw.ellipse((0,0,background.height,background.height), fill=255)
 		background.paste(img, (int((background.width - img.width)/2), 0), img)
-		ImageDraw.Draw(background).ellipse((0,0,background.height,background.height), outline = 0, width=2)
+		ImageDraw.Draw(background).ellipse((0,0,background.height-width/2,background.height-width/2), outline = 0, width=width)
 		cvs.paste(background, (x,y), mask=mask)
 
 def renderStats(x, y, g, t, cvs):
@@ -182,9 +182,9 @@ def renderImage(g):
 						athleteStats = dict(zip(stats[g]["players"][tNum]["statistics"][0]["names"], stats[g]["players"][tNum]["statistics"][0]["athletes"][p]["stats"]))
 						draw.text((136,yCoord+40), f'{athletes[p]["athlete"]["displayName"]} - {athleteStats.get("PTS", 0)} pts, {athleteStats.get("REB", 0)} reb, {athleteStats.get("AST", 0)} ast, {athleteStats.get("FG", 0)} FG, {int(athleteStats.get("STL", 0)) + int(athleteStats.get("BLK", 0))} stl+blk', font=font)
 						url = athletes[p]["athlete"]["headshot"]["href"] if athletes[p]["athlete"].get("headshot", []) else "default.png"
-						pbpIcon(10, yCoord-25, 110, screen, url)
+						pbpIcon(10, yCoord-25, 110, screen, url, 2, 180)
 			else:
-				pbpIcon(10, yCoord-25, 110, screen, event[g]["competitions"][0]["competitors"][i]["team"]["logo"])
+				pbpIcon(10, yCoord-25, 110, screen, event[g]["competitions"][0]["competitors"][i]["team"]["logo"], 0, 255)
 	else:
 		fontSize(50)
 		draw.text((400, 200), play, font=font, align="center", anchor="mm")
