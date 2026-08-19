@@ -1,27 +1,28 @@
 #! /usr/bin/python3 
-import subprocess, time, json
+import subprocess, time, json, sys
 from PIL import Image, ImageDraw, ImageFont
-
 
 wnba = "testWNBA.txt"
 font = ImageFont.truetype("/System/Library/Fonts/Supplemental/Arial.ttf", 1)
-stats = []
 
 def runCommand(program, *params):
 	result = subprocess.run([program,*params], capture_output=True, text=True, encoding='utf-8', errors='replace', timeout=30)
 	return result.stdout
-
+stats = []
 event = []
 stats = []
 leaders = []
+awayIndex = []
 
 def refreshData():
 #	runCommand("curl", "https://site.api.espn.com/apis/site/v2/sports/basketball/wnba/scoreboard", "--output", wnba)
-	global event, stats, leaders
+	global event, stats, leaders, awayIndex
 	stats.clear()
+	leaders.clear()
 	with open(wnba) as f:
 		data = json.load(f)
 	event = data["events"]
+	e = 0
 	for g in event:
 		id = g["id"]
 #		runCommand("curl", f'https://site.api.espn.com/apis/site/v2/sports/basketball/wnba/summary?event={id}', "--output", f'{id}.txt')
@@ -30,6 +31,12 @@ def refreshData():
 		leaders.append(sdata["leaders"])
 		sdata = sdata["boxscore"]
 		stats.append(sdata)
+		tmpIndex = {}
+		tmpIndex["scoreboard"] = 0 if event[e]["competitions"][0]["competitors"][0]["homeAway"] == "away" else 1
+		tmpIndex["stats"] = 0 if "away" in stats[e]["teams"][0]["homeAway"] else 1
+		tmpIndex["leaders"] = 0 if leaders[e][0]["team"]["displayName"] == event[e]["competitions"][0]["competitors"][tmpIndex["scoreboard"]]["team"]["displayName"] else 1
+		awayIndex.append(tmpIndex)
+		e += 1
 
 refreshData()
 
@@ -38,7 +45,7 @@ class Game:
 		self.event = event
 	def getScore(self, g):
 		comp = event[g]["competitions"][0]["competitors"]
-		return f'{comp[0]["score"]} - {comp[1]["score"]}'
+		return f'{comp[awayIndex[g]["scoreboard"]]["score"]} - {comp[1 - awayIndex[g]["scoreboard"]]["score"]}'
 	def getLastPlay(self, g):
 		if ("situation" in event[g]["competitions"][0]):
 			lastPlay = event[g]["competitions"][0]["situation"]["lastPlay"]
@@ -56,21 +63,7 @@ class Game:
 		runCommand("curl", logo, "--output", f'{name}')
 		return name
 
-
-
 game = Game(event)
-
-writeQueue = []
-
-def queueLine(x, y, info):
-	toAppend = f'/usr/sbin/eips {x} {y} "{info}"'
-	writeQueue.append(toAppend)
-
-def textData():
-	gAmount = (len(event))
-	for i in range(gAmount):
-		queueLine(3, 2+ i*3, game.getScore(i))
-		queueLine(3, 2+ i*3 + 1, game.getLastPlay(i))
 
 def fontSize(f):
 	global font
@@ -93,14 +86,12 @@ def pbpIcon(x, y, size, cvs, url):
 		maskDraw.ellipse((0,0,background.height,background.height), fill=255)
 		background.paste(img, (int((background.width - img.width)/2), 0), img)
 		ImageDraw.Draw(background).ellipse((0,0,background.height,background.height), outline = 0, width=2)
-		background.save("icontest.png")
 		cvs.paste(background, (x,y), mask=mask)
 
 def renderStats(x, y, g, t, cvs):
 	teamStats = {}
-	tNum = 1-t
 	draw = ImageDraw.Draw(cvs)
-	rawStats = stats[g]["teams"][tNum]["statistics"]
+	rawStats = stats[g]["teams"][t]["statistics"]
 	for s in rawStats:
 		teamStats[s["name"]] = s["displayValue"]
 	statsToRender = ["FG", "3FG", "FT", "AST", "REB", "TO", "STL", "BLK", "PFT", "PF"]
@@ -118,7 +109,7 @@ def renderStats(x, y, g, t, cvs):
 			num2 = int(statValue[statValue.find("-")+1:])
 			print(f'{num1}/{num2}')
 			fontSize(18)
-			draw.text((x + spacing, y + (row * 85) + 55), f'{int((num1/num2)*1000)/10}%', font=font)
+			draw.text((x + spacing, y + (row * 85) + 55), f'{int((num1/num2)*1000)/10 if num2 != 0 else 0}%', font=font)
 		statLen = len(statValue) if len(statValue) > 2 else 2
 		spacing += ((statLen * 14) + 20)
 		if (i == 4):
@@ -127,8 +118,7 @@ def renderStats(x, y, g, t, cvs):
 
 
 def renderLeaders(x, y, g, t, cvs):
-	tNum = 1-t
-	l = leaders[g][tNum]["leaders"]
+	l = leaders[g][t]["leaders"]
 	draw = ImageDraw.Draw(cvs)
 	statsToRender = ["pts", "ast", "reb"]
 	for i in range(len(statsToRender)):
@@ -156,8 +146,8 @@ def renderImage(g):
 	#Header
 	fontSize(30)
 	for i in range(2):
-		draw.text((125+i*462,22), f'{event[g]["competitions"][0]["competitors"][i]["team"]["location"]}\n{event[g]["competitions"][0]["competitors"][i]["team"]["name"]}', font=font, fill=0)
-		pasteImage(22+i*462, 15, 85, screen, event[g]["competitions"][0]["competitors"][i]["team"]["logo"])
+		draw.text((125+i*462,22), f'{event[g]["competitions"][0]["competitors"][1*i - awayIndex[g]["scoreboard"]]["team"]["location"]}\n{event[g]["competitions"][0]["competitors"][1*i-awayIndex[g]["scoreboard"]]["team"]["name"]}', font=font, fill=0)
+		pasteImage(22+i*462, 15, 85, screen, event[g]["competitions"][0]["competitors"][1*i - awayIndex[g]["scoreboard"]]["team"]["logo"])
 	fontSize(40)
 	draw.text((400, 70), "@", font=font, fill=0, align="center", anchor="mm")
 
@@ -175,26 +165,23 @@ def renderImage(g):
 	if (play != "Game not active"):
 		draw.text((136, yCoord), f'{play}', font=font)
 		print(play)
+
 	#Player info + player/team pfp
 		if (team != "noTeam"):
-			tNum = 2
 			for i in range(2):
 				if (team == event[g]["competitions"][0]["competitors"][i]["id"]):
-					tNum = 1-i
+					if (event[g]["competitions"][0]["competitors"][i]["homeAway"] == "away"):
+						tNum = awayIndex[g]["stats"]
+					else:
+						tNum = 1 - awayIndex[g]["stats"]
 					break
 			if ((player !="noAthlete") & (team != "noTeam")):
-				tNum = 2
-				for i in range(2):
-					if (team == event[g]["competitions"][0]["competitors"][i]["id"]):
-						tNum = 1-i
-						break
-
 				athletes = stats[g]["players"][tNum]["statistics"][0]["athletes"]
 				for p in range(len(athletes)):
 					if (athletes[p]["athlete"]["id"] == player):
 						athleteStats = dict(zip(stats[g]["players"][tNum]["statistics"][0]["names"], stats[g]["players"][tNum]["statistics"][0]["athletes"][p]["stats"]))
-						draw.text((136,yCoord+40), f'{athletes[p]["athlete"]["displayName"]} - {athleteStats.get("PTS")} pts, {athleteStats["REB"]} reb, {athleteStats["AST"]} ast, {athleteStats["FG"]} FG, {int(athleteStats["STL"]) + int(athleteStats["BLK"])} stl+blk', font=font)
-						url = athletes[p]["athlete"]["headshot"]["href"]
+						draw.text((136,yCoord+40), f'{athletes[p]["athlete"]["displayName"]} - {athleteStats.get("PTS", 0)} pts, {athleteStats.get("REB", 0)} reb, {athleteStats.get("AST", 0)} ast, {athleteStats.get("FG", 0)} FG, {int(athleteStats.get("STL", 0)) + int(athleteStats.get("BLK", 0))} stl+blk', font=font)
+						url = athletes[p]["athlete"]["headshot"]["href"] if athletes[p]["athlete"].get("headshot", []) else "default.png"
 						pbpIcon(10, yCoord-25, 110, screen, url)
 			else:
 				pbpIcon(10, yCoord-25, 110, screen, event[g]["competitions"][0]["competitors"][i]["team"]["logo"])
@@ -203,23 +190,40 @@ def renderImage(g):
 		draw.text((400, 200), play, font=font, align="center", anchor="mm")
 
 	#Team stats
-	renderStats(30, 275, g, 0, screen)
-	renderStats(430, 275, g, 1, screen)
-	#Tema leaders
-	renderLeaders(30, 465, g, 0, screen)
-	renderLeaders(430, 465, g, 1, screen)
+	renderStats(30, 275, g, awayIndex[g]["stats"], screen)
+	renderStats(430, 275, g, 1 - awayIndex[g]["stats"], screen)
 
-	screen.save("testrender.png")
+	#Team leaders
+	renderLeaders(30, 465, g, awayIndex[g]["leaders"], screen)
+	renderLeaders(430, 465, g, 1-awayIndex[g]["leaders"], screen)
+
+	screen.save(f"render.png")
 
 runCommand('ssh', 'kindle2', '/usr/sbin/eips -fc')
+count = 0
 while True:
-	renderImage(0)
-	runCommand("scp", "testrender.png", "kindle2:~/")
-	runCommand("ssh", "kindle2", "/usr/sbin/eips -g testrender.png")
+	renderImage(int(sys.argv[1]))
+	runCommand("scp", "render.png", "kindle2:~/")
+	command = "/usr/sbin/eips -g testrender.png" if count%10 != 0 else "/usr/sbin/eips -fg render.png"
+	runCommand("ssh", "kindle2", command)
+	count += 1
 	refreshData()
-	time.sleep(8)
+	time.sleep(7)
 
-
+#Old program (showed status of multiple games)
+#
+#writeQueue = []
+#
+#def queueLine(x, y, info):
+#	toAppend = f'/usr/sbin/eips {x} {y} "{info}"'
+#	writeQueue.append(toAppend)
+#
+#def textData():
+#	gAmount = (len(event))
+#	for i in range(gAmount):
+#		queueLine(3, 2+ i*3, game.getScore(i))
+#		queueLine(3, 2+ i*3 + 1, game.getLastPlay(i))
+#
 
 #runCommand('ssh', 'kindle', '/usr/sbin/eips -fc')
 
