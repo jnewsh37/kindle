@@ -163,7 +163,7 @@ def renderImage(g):
 	play, player, team = game.getLastPlay(g)
 	fontSize(24)
 	if (play != "Game not active"):
-		draw.text((136, yCoord), f'{play}', font=font)
+		draw.text((136, yCoord), f'{play.replace("\n", "")}', font=font)
 		print(play)
 
 	#Player info + player/team pfp
