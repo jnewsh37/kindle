@@ -2,7 +2,7 @@
 import subprocess, time, json, sys
 from PIL import Image, ImageDraw, ImageFont
 
-wnba = "testWNBA.txt"
+wnba = "wnba.txt"
 font = ImageFont.truetype("/System/Library/Fonts/Supplemental/Arial.ttf", 1)
 
 def runCommand(program, *params):
@@ -15,7 +15,7 @@ leaders = []
 awayIndex = []
 
 def refreshData():
-#	runCommand("curl", "https://site.api.espn.com/apis/site/v2/sports/basketball/wnba/scoreboard", "--output", wnba)
+	runCommand("curl", "https://site.api.espn.com/apis/site/v2/sports/basketball/wnba/scoreboard", "--output", wnba)
 	global event, stats, leaders, awayIndex
 	stats.clear()
 	leaders.clear()
@@ -25,7 +25,7 @@ def refreshData():
 	e = 0
 	for g in event:
 		id = g["id"]
-#		runCommand("curl", f'https://site.api.espn.com/apis/site/v2/sports/basketball/wnba/summary?event={id}', "--output", f'{id}.txt')
+		runCommand("curl", f'https://site.api.espn.com/apis/site/v2/sports/basketball/wnba/summary?event={id}', "--output", f'{id}.txt')
 		with open(f'{id}.txt') as s:
 			sdata = json.load(s)
 		leaders.append(sdata["leaders"])
