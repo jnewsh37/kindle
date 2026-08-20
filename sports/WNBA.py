@@ -2,30 +2,31 @@
 import subprocess, time, json, sys
 from PIL import Image, ImageDraw, ImageFont
 
-wnba = "wnba.txt"
+scoreboardfile = "wnba.txt"
+league = sys.argv[2]
 font = ImageFont.truetype("/System/Library/Fonts/Supplemental/Arial.ttf", 1)
-
-def runCommand(program, *params):
-	result = subprocess.run([program,*params], capture_output=True, text=True, encoding='utf-8', errors='replace', timeout=30)
-	return result.stdout
 stats = []
 event = []
 stats = []
 leaders = []
 awayIndex = []
 
+def runCommand(program, *params):
+	result = subprocess.run([program,*params], capture_output=True, text=True, encoding='utf-8', errors='replace', timeout=30)
+	return result.stdout
+
 def refreshData():
-	runCommand("curl", "https://site.api.espn.com/apis/site/v2/sports/basketball/wnba/scoreboard", "--output", wnba)
+	runCommand("curl", f"https://site.api.espn.com/apis/site/v2/sports/basketball/{league}/scoreboard", "--output", scoreboardfile)
 	global event, stats, leaders, awayIndex
 	stats.clear()
 	leaders.clear()
-	with open(wnba) as f:
+	with open(scoreboardfile) as f:
 		data = json.load(f)
 	event = data["events"]
 	e = 0
 	for g in event:
 		id = g["id"]
-		runCommand("curl", f'https://site.api.espn.com/apis/site/v2/sports/basketball/wnba/summary?event={id}', "--output", f'{id}.txt')
+		runCommand("curl", f'https://site.api.espn.com/apis/site/v2/sports/basketball/{league}/summary?event={id}', "--output", f'{id}.txt')
 		with open(f'{id}.txt') as s:
 			sdata = json.load(s)
 		leaders.append(sdata["leaders"])
@@ -81,7 +82,6 @@ def pbpIcon(x, y, size, cvs, url, width, fill):
 		imgPath = "tmp.png"
 	else:
 		imgPath = url
-	print(imgPath)
 	with Image.open(imgPath) as img:
 		background = Image.new("L", (size, size), fill)
 		ar = img.width/img.height
@@ -104,7 +104,7 @@ def renderStats(x, y, g, t, cvs):
 	spacing=0
 	row = 0
 	for i in range(10):
-		statValue = teamStats[espnNames[statsToRender[i]]]
+		statValue = teamStats.get(espnNames[statsToRender[i]], "0")
 		fontSize(18)
 		draw.text((x + spacing, y + (row * 85) + 32), statsToRender[i], font=font)
 		fontSize(28)
@@ -126,9 +126,10 @@ def renderLeaders(x, y, g, t, cvs):
 	l = leaders[g][t]["leaders"]
 	draw = ImageDraw.Draw(cvs)
 	statsToRender = ["pts", "ast", "reb"]
-	for i in range(len(statsToRender)):
-		fontSize(26)
-		draw.text((x, y + 32*i), (f'{l[i]["leaders"][0]["athlete"]["fullName"]} • {l[i]["leaders"][0]["athlete"]["position"]["abbreviation"]}: {int(l[i]["leaders"][0]["value"])} {statsToRender[i]}'), font=font)
+	if (len(l) >= 3):
+		for i in range(len(statsToRender)):
+			fontSize(26)
+			draw.text((x, y + 32*i), (f'{l[i]["leaders"][0]["athlete"]["fullName"]} • {l[i]["leaders"][0]["athlete"]["position"]["abbreviation"]}: {int(l[i]["leaders"][0]["value"])} {statsToRender[i]}'), font=font)
 
 def renderImage(g):
 	global font
@@ -164,10 +165,19 @@ def renderImage(g):
 	#Play info
 	yCoord = 150
 	play, player, team = game.getLastPlay(g)
+	play = play.replace("\n", "")
 	fontSize(24)
 	if (play != "Game not active"):
-		draw.text((136, yCoord), f'{play}', font=font)
 		print(play)
+		if (len(play) > 50):
+			play1 = play[:(play.rfind(" ", 0, 50))]
+			play2 = play[(len(play1)+1):]
+			draw.text((136, yCoord), f'{play1}', font=font)
+			draw.text((136, yCoord+40), f'{play2}', font=font)
+			longPlay = True
+		else:
+			draw.text((136, yCoord), f'{play}', font=font)
+			longPlay = False
 
 	#Player info + player/team pfp
 		if (team != "noTeam"):
@@ -182,8 +192,9 @@ def renderImage(g):
 				athletes = stats[g]["players"][tNum]["statistics"][0]["athletes"]
 				for p in range(len(athletes)):
 					if (athletes[p]["athlete"]["id"] == player):
-						athleteStats = dict(zip(stats[g]["players"][tNum]["statistics"][0]["names"], stats[g]["players"][tNum]["statistics"][0]["athletes"][p]["stats"]))
-						draw.text((136,yCoord+40), f'{athletes[p]["athlete"]["displayName"]} - {athleteStats.get("PTS", 0)} pts, {athleteStats.get("REB", 0)} reb, {athleteStats.get("AST", 0)} ast, {athleteStats.get("FG", 0)} FG, {int(athleteStats.get("STL", 0)) + int(athleteStats.get("BLK", 0))} stl+blk', font=font)
+						if (not longPlay):
+							athleteStats = dict(zip(stats[g]["players"][tNum]["statistics"][0]["names"], stats[g]["players"][tNum]["statistics"][0]["athletes"][p]["stats"]))
+							draw.text((136,yCoord+40), f'{athletes[p]["athlete"]["displayName"]} - {athleteStats.get("PTS", 0)} pts, {athleteStats.get("REB", 0)} reb, {athleteStats.get("AST", 0)} ast, {athleteStats.get("FG", 0)} FG, {int(athleteStats.get("STL", 0)) + int(athleteStats.get("BLK", 0))} stl+blk', font=font)
 						url = athletes[p]["athlete"]["headshot"]["href"] if athletes[p]["athlete"].get("headshot", []) else "default.png"
 						pbpIcon(10, yCoord-25, 110, screen, url, 2, 180)
 			else:
@@ -203,10 +214,16 @@ def renderImage(g):
 	screen.save(f"render.png")
 
 runCommand('ssh', 'kindle', '/usr/sbin/eips -fc')
+gameSelection = int(sys.argv[1])
+if (gameSelection > len(event)-1 or gameSelection < 0):
+	print(f"Invalid game selection, there are {len(event)} games in this league today. Defaulting to 0")
+	gameSelection = 0
 count = 0
+print(event[gameSelection]["name"])
 while (True):
-	status = event[int(sys.argv[1])]["competitions"][0]["status"]["type"]["description"]
-	renderImage(int(sys.argv[1]))
+	status = event[gameSelection]["competitions"][0]["status"]["type"]["description"]
+	baseInterval = 7
+	renderImage(gameSelection)
 	runCommand("scp", "render.png", "kindle:~/")
 	command = "/usr/sbin/eips -g render.png" if count%10 != 0 else "/usr/sbin/eips -fg render.png"
 	runCommand("ssh", "kindle", command)
@@ -217,12 +234,12 @@ while (True):
 	refreshData()
 	if (status == "Scheduled"):
 		print("Game not started, sleeping for 2 minutes")
-		time.sleep(120)
+		time.sleep(baseInterval * 20)
 	elif (status == "Halftime"):
 		print("Game in halftime, sleeping for 30 seconds")
-		time.sleep(30)
+		time.sleep(baseInterval * 5)
 	else:
-		time.sleep(7)
+		time.sleep(baseInterval)
 
 #Old program (showed status of multiple games)
 #
