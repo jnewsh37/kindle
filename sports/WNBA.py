@@ -76,8 +76,13 @@ def pasteImage(x, y, size, cvs, url):
 		cvs.paste(img, (x, y), img)
 
 def pbpIcon(x, y, size, cvs, url, width, fill):
-	runCommand("curl", url, "--output", "tmp.png")
-	with Image.open("tmp.png") as img:
+	if (url != "default.png"):
+		runCommand("curl", url, "--output", "tmp.png")
+		imgPath = "tmp.png"
+	else:
+		imgPath = url
+	print(imgPath)
+	with Image.open(imgPath) as img:
 		background = Image.new("L", (size, size), fill)
 		ar = img.width/img.height
 		img = img.resize((int(size*ar),size))
@@ -125,8 +130,6 @@ def renderLeaders(x, y, g, t, cvs):
 		fontSize(26)
 		draw.text((x, y + 32*i), (f'{l[i]["leaders"][0]["athlete"]["fullName"]} • {l[i]["leaders"][0]["athlete"]["position"]["abbreviation"]}: {int(l[i]["leaders"][0]["value"])} {statsToRender[i]}'), font=font)
 
-
-
 def renderImage(g):
 	global font
 	screen = Image.new("L", (800,600), 255)
@@ -163,7 +166,7 @@ def renderImage(g):
 	play, player, team = game.getLastPlay(g)
 	fontSize(24)
 	if (play != "Game not active"):
-		draw.text((136, yCoord), f'{play.replace("\n", "")}', font=font)
+		draw.text((136, yCoord), f'{play}', font=font)
 		print(play)
 
 	#Player info + player/team pfp
@@ -199,16 +202,27 @@ def renderImage(g):
 
 	screen.save(f"render.png")
 
-runCommand('ssh', 'kindle2', '/usr/sbin/eips -fc')
+runCommand('ssh', 'kindle', '/usr/sbin/eips -fc')
 count = 0
-while True:
+while (True):
+	status = event[int(sys.argv[1])]["competitions"][0]["status"]["type"]["description"]
 	renderImage(int(sys.argv[1]))
-	runCommand("scp", "render.png", "kindle2:~/")
-	command = "/usr/sbin/eips -g testrender.png" if count%10 != 0 else "/usr/sbin/eips -fg render.png"
-	runCommand("ssh", "kindle2", command)
+	runCommand("scp", "render.png", "kindle:~/")
+	command = "/usr/sbin/eips -g render.png" if count%10 != 0 else "/usr/sbin/eips -fg render.png"
+	runCommand("ssh", "kindle", command)
 	count += 1
+	if (status == "Final"):
+		print("Game over, exiting")
+		break
 	refreshData()
-	time.sleep(7)
+	if (status == "Scheduled"):
+		print("Game not started, sleeping for 2 minutes")
+		time.sleep(120)
+	elif (status == "Halftime"):
+		print("Game in halftime, sleeping for 30 seconds")
+		time.sleep(30)
+	else:
+		time.sleep(7)
 
 #Old program (showed status of multiple games)
 #
