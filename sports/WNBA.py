@@ -213,7 +213,7 @@ def renderImage(g):
 
 	screen.save(f"render.png")
 
-runCommand('ssh', 'kindle', '/usr/sbin/eips -fc')
+runCommand('ssh', sys.argv[3], '/usr/sbin/eips -fc')
 gameSelection = int(sys.argv[1])
 if (gameSelection > len(event)-1 or gameSelection < 0):
 	print(f"Invalid game selection, there are {len(event)} games in this league today. Defaulting to 0")
@@ -224,9 +224,9 @@ while (True):
 	status = event[gameSelection]["competitions"][0]["status"]["type"]["description"]
 	baseInterval = 7
 	renderImage(gameSelection)
-	runCommand("scp", "render.png", "kindle:~/")
+	runCommand("scp", "render.png", f"{sys.argv[3]}:~/")
 	command = "/usr/sbin/eips -g render.png" if count%10 != 0 else "/usr/sbin/eips -fg render.png"
-	runCommand("ssh", "kindle", command)
+	runCommand("ssh", sys.argv[3], command)
 	count += 1
 	if (status == "Final"):
 		print("Game over, exiting")
