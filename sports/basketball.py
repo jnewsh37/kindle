@@ -2,7 +2,7 @@
 import subprocess, time, json, sys
 from PIL import Image, ImageDraw, ImageFont
 
-scoreboardfile = "wnba.txt"
+scoreboardfile = "basketball.txt"
 league = sys.argv[2]
 font = ImageFont.truetype("/System/Library/Fonts/Supplemental/Arial.ttf", 1)
 stats = []
