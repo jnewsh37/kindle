@@ -1,0 +1,20 @@
+Notes
+Magick command to convert to eips-friendly format is $(magick in.png -resize 800x600 -background white -alpha remove -alpha off -colorspace Gray -type Grayscale -depth 8 out.png)
+Logo link at .events[].competitions[].competitors[team].team.logo (jq -r)
+Full team name at .events[].competitions[].competitors[team].team.displayName
+Google Drawing Mockup:Actual Resolution = 96pixels/inch
+
+Stats url: https://site.api.espn.com/apis/site/v2/sports/basketball/wnba/summary?event=(eventID)
+Stat names: .boxscore.players[team (either)].statistics[0].names
+Player stats: .boxscore.players[team].statistics[0].athletes[athlete]
+
+#Finish layout sketch on Google Drawings, figure out most important stats
+#Write function to render image in python (using pillow)
+    Two views: #in-progress and end game
+
+
+#Next: mask ESPN headshot, render next to pbp. Use summary endpoint to include in-depth stats. Finish layout. 
+
+#Fixes needed: if player headshot doesn't exist program exits from keyerror. Use .get(). Team's indicies in arrrays are random, check instead of assuming away team is 0 and home is 1
+
+Improvements: utilize cached images instead of re-downloading every render, don't render if all info is same as last time. **Newline and don't include player stats if play info longer than one line**

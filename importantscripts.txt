@@ -1,0 +1,27 @@
+Simulate Power Button
+lipc-set-prop com.lab126.powerd powerButton 1
+
+Home Screen
+lipc-set-prop com.lab126.appmgrd start app://com.lab126.booklet.home
+
+Open File
+lipc-set-prop com.lab126.appmgrd start app://com.lab126.booklet.reader(path to file)
+
+Get Battery Level
+lipc-get-prop com.lab126.powerd battLevel
+
+Prevent Screensaver
+lipc-set-prop com.lab126.powerd preventScreenSaver 1 
+
+Set Orientation
+lipc-set-prop com.lab126.winmgr orientationLock [L, R, U, D]
+
+Set Audio Levels
+/usr/bin/amixer sset 'MIXINL PGA',0 100% unmute cap
+/usr/bin/amixer sset 'Capture',0 100%,100% unmute cap
+
+Record Audio
+arecord target.wav
+
+Play Audio
+aplay target.wav
