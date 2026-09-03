@@ -129,7 +129,10 @@ def renderLeaders(x, y, g, t, cvs):
 	if (len(l) >= 3):
 		for i in range(len(statsToRender)):
 			fontSize(26)
-			draw.text((x, y + 32*i), (f'{l[i]["leaders"][0]["athlete"]["fullName"]} • {l[i]["leaders"][0]["athlete"]["position"]["abbreviation"]}: {int(l[i]["leaders"][0]["value"])} {statsToRender[i]}'), font=font)
+			name = l[i]["leaders"][0]["athlete"]["fullName"]
+			if (len(name) > 20):
+				name = f'{name[:1]}. {name[:name.find(" ")]}'
+			draw.text((x, y + 32*i), (f'{name} • {l[i]["leaders"][0]["athlete"]["position"]["abbreviation"]}: {int(l[i]["leaders"][0]["value"])} {statsToRender[i]}'), font=font)
 
 def renderImage(g):
 	global font
@@ -157,7 +160,9 @@ def renderImage(g):
 
 	#Status
 	fontSize(25)
-	draw.text((400, 30), event[g]["competitions"][0]["status"]["type"]["shortDetail"], font=font, align="center", anchor="mm")
+	status = event[g]["competitions"][0]["status"]["type"]["shortDetail"]
+	status = status[:status.find("EDT")] if "EDT" in status else status	
+	draw.text((400, 30), status, font=font, align="center", anchor="mm")
 	fontSize(35)
 	draw.text((400,120), game.getScore(g), font=font, align="center", anchor="mm")
 
@@ -240,6 +245,8 @@ while (True):
 		time.sleep(baseInterval * 5)
 	else:
 		time.sleep(baseInterval)
+
+#In landscape, x=64 and y=29 are max coords for eips text drawing 
 
 #Old program (showed status of multiple games)
 #
