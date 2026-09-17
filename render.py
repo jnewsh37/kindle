@@ -32,7 +32,7 @@ def render(saveName):
     draw.text((400, 300), "Upcoming: ", font=font, fill=0, aligh="center", anchor="mm")
     draw.line((0, 300, 325, 300), fill=0, width=3)
     draw.line((475, 300, 800, 300), fill=0, width=3)
-    print("yahoods mad")
+    print("67")
     screen.save(saveName)
 
 render("testrender.png")

@@ -1,3 +1,5 @@
+Note: In landscape, x=64 and y=29 are max coords for eips text drawing
+
 Simulate Power Button
 lipc-set-prop com.lab126.powerd powerButton 1
 

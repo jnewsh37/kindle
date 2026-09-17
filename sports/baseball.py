@@ -1,5 +1,6 @@
 #! /usr/bin/python3 
 import subprocess, time
+kindle = "kindle3"
 
 class game:
 	def __init__(self, num, name):
@@ -44,7 +45,7 @@ for g in gamelist:
 writeQueue = []
 currentInfo = []
 oldInfo = []
-blank = (" " * 31)
+blank = (" " * 32)
 firstRun = True
 
 def addToQueue(line, row, info):
@@ -52,7 +53,7 @@ def addToQueue(line, row, info):
 	writeQueue.append(toAppend)
 
 runCommand('curl', "https://site.api.espn.com/apis/site/v2/sports/baseball/mlb/scoreboard", '--output', 'mlb.txt')
-runCommand('ssh', 'kindle2', '/usr/sbin/eips', '-fc')
+runCommand('ssh', kindle, '/usr/sbin/eips', '-fc')
 
 def refreshManager(x, y, info):
 	if (not firstRun):
@@ -73,8 +74,6 @@ def run10():
 	global currentInfo
 	spacing = 5
 	yspacing = 3
-
-#	runCommand('ssh', 'kindle', '/usr/sbin/eips', '-c')
 
 	for i in range(5):
 		refreshManager((yspacing + i*spacing), 3, f'{games[f"{gamelist[i]}"].getScore()}')
@@ -106,7 +105,7 @@ def run10():
 			refreshManager((yspacing+3 + i*spacing), 35, " ")
 		
 	if writeQueue:
-		runCommand('ssh', 'kindle2', ";".join(writeQueue))
+		runCommand('ssh', kindle, ";".join(writeQueue))
 	runCommand('curl', "https://site.api.espn.com/apis/site/v2/sports/baseball/mlb/scoreboard", '--output', 'mlb.txt')
 
 	oldInfo = currentInfo.copy()
@@ -116,4 +115,4 @@ def run10():
 
 while True:
 	run10()
-	time.sleep(3)
+	time.sleep(8)

@@ -1,9 +1,20 @@
-#! /usr/bin/python3 
+#! /usr/bin/env python3 
 import subprocess, time, json, sys
 from PIL import Image, ImageDraw, ImageFont
 
 scoreboardfile = "basketball.txt"
-league = sys.argv[2]
+try:
+	league = sys.argv[1]
+	gameNum = int(sys.argv[2])
+	ip = sys.argv[3]
+
+except IndexError:
+	print("Run again with these 3 arguments: a league ESPN tracks (NBA, WNBA, FIBA, etc) in lowercase, the game number (starting at 0), and the IP of the target device (kindle, mrcooliothe67th@192.168.200.2, etc)")
+	sys.exit()
+
+# Path to the directory you would like all of the assets to be stored (will eventually utilized cached files, for now I'm wasting your storage cuz I feel like it :) )
+assetPath = "./" if len(sys.argv) < 5 else sys.argv[4]
+rendered = "render.png" 
 font = ImageFont.truetype("/System/Library/Fonts/Supplemental/Arial.ttf", 1)
 stats = []
 event = []
@@ -16,18 +27,18 @@ def runCommand(program, *params):
 	return result.stdout
 
 def refreshData():
-	runCommand("curl", f"https://site.api.espn.com/apis/site/v2/sports/basketball/{league}/scoreboard", "--output", scoreboardfile)
+	runCommand("curl", f"https://site.api.espn.com/apis/site/v2/sports/basketball/{league}/scoreboard", "--output", assetPath + scoreboardfile)
 	global event, stats, leaders, awayIndex
 	stats.clear()
 	leaders.clear()
-	with open(scoreboardfile) as f:
+	with open(assetPath + scoreboardfile) as f:
 		data = json.load(f)
 	event = data["events"]
 	e = 0
 	for g in event:
 		id = g["id"]
-		runCommand("curl", f'https://site.api.espn.com/apis/site/v2/sports/basketball/{league}/summary?event={id}', "--output", f'{id}.txt')
-		with open(f'{id}.txt') as s:
+		runCommand("curl", f'https://site.api.espn.com/apis/site/v2/sports/basketball/{league}/summary?event={id}', "--output", assetPath + f'{id}.txt')
+		with open(assetPath + f'{id}.txt') as s:
 			sdata = json.load(s)
 		leaders.append(sdata["leaders"])
 		sdata = sdata["boxscore"]
@@ -61,8 +72,8 @@ class Game:
 	def getTeamLogo(self, g, t):
 		logo = event[g]["competitions"][0]["competitors"][t]["team"]["logo"]
 		name = f'WNBA{(event[g]["competitions"][0]["competitors"][t]["team"]["name"]).lower()}.png'
-		runCommand("curl", logo, "--output", f'{name}')
-		return name
+		runCommand("curl", logo, "--output", assetPath + f'{name}')
+		return assetPath + name
 
 game = Game(event)
 
@@ -78,8 +89,8 @@ def pasteImage(x, y, size, cvs, url):
 
 def pbpIcon(x, y, size, cvs, url, width, fill):
 	if (url != "default.png"):
-		runCommand("curl", url, "--output", "tmp.png")
-		imgPath = "tmp.png"
+		runCommand("curl", url, "--output", assetPath + "tmp.png")
+		imgPath = assetPath + "tmp.png"
 	else:
 		imgPath = url
 	with Image.open(imgPath) as img:
@@ -112,7 +123,7 @@ def renderStats(x, y, g, t, cvs):
 		if ('-' in statValue):
 			num1 = int(statValue[:statValue.find("-")])
 			num2 = int(statValue[statValue.find("-")+1:])
-			print(f'{num1}/{num2}')
+#			print(f'{num1}/{num2}')
 			fontSize(18)
 			draw.text((x + spacing, y + (row * 85) + 55), f'{int((num1/num2)*1000)/10 if num2 != 0 else 0}%', font=font)
 		statLen = len(statValue) if len(statValue) > 2 else 2
@@ -120,7 +131,6 @@ def renderStats(x, y, g, t, cvs):
 		if (i == 4):
 			row+=1
 			spacing = 0
-
 
 def renderLeaders(x, y, g, t, cvs):
 	l = leaders[g][t]["leaders"]
@@ -200,7 +210,7 @@ def renderImage(g):
 						if (not longPlay):
 							athleteStats = dict(zip(stats[g]["players"][tNum]["statistics"][0]["names"], stats[g]["players"][tNum]["statistics"][0]["athletes"][p]["stats"]))
 							draw.text((136,yCoord+40), f'{athletes[p]["athlete"]["displayName"]} - {athleteStats.get("PTS", 0)} pts, {athleteStats.get("REB", 0)} reb, {athleteStats.get("AST", 0)} ast, {athleteStats.get("FG", 0)} FG, {int(athleteStats.get("STL", 0)) + int(athleteStats.get("BLK", 0))} stl+blk', font=font)
-						url = athletes[p]["athlete"]["headshot"]["href"] if athletes[p]["athlete"].get("headshot", []) else "default.png"
+						url = athletes[p]["athlete"]["headshot"]["href"] if athletes[p]["athlete"].get("headshot", []) else assetPath + "default.png"
 						pbpIcon(10, yCoord-25, 110, screen, url, 2, 180)
 			else:
 				pbpIcon(10, yCoord-25, 110, screen, event[g]["competitions"][0]["competitors"][i]["team"]["logo"], 0, 255)
@@ -216,59 +226,41 @@ def renderImage(g):
 	renderLeaders(30, 465, g, awayIndex[g]["leaders"], screen)
 	renderLeaders(430, 465, g, 1-awayIndex[g]["leaders"], screen)
 
+	#You're not going to believe what this does
 	screen.save(f"render.png")
 
-runCommand('ssh', sys.argv[3], '/usr/sbin/eips -fc')
-gameSelection = int(sys.argv[1])
-if (gameSelection > len(event)-1 or gameSelection < 0):
-	print(f"Invalid game selection, there are {len(event)} games in this league today. Defaulting to 0")
-	gameSelection = 0
-count = 0
-print(event[gameSelection]["name"])
-while (True):
-	status = event[gameSelection]["competitions"][0]["status"]["type"]["description"]
-	baseInterval = 7
-	renderImage(gameSelection)
-	runCommand("scp", "render.png", f"{sys.argv[3]}:~/")
-	command = "/usr/sbin/eips -g render.png" if count%10 != 0 else "/usr/sbin/eips -fg render.png"
-	runCommand("ssh", sys.argv[3], command)
-	count += 1
-	if (status == "Final"):
-		print("Game over, exiting")
-		break
-	refreshData()
-	if (status == "Scheduled"):
-		print("Game not started, sleeping for 2 minutes")
-		time.sleep(baseInterval * 20)
-	elif (status == "Halftime"):
-		print("Game in halftime, sleeping for 30 seconds")
-		time.sleep(baseInterval * 5)
-	else:
-		time.sleep(baseInterval)
+def run():
+	global gameNum
+	if (gameNum > len(event)-1 or gameNum < 0):
+		print(f"Invalid game selection, there are {len(event)} games in this league today. Defaulting to 0")
+		gameNum = 0
+	runCommand('ssh', ip, '/usr/sbin/eips -fc')
+	count = 0
+	print(event[gameNum]["name"])
+	while (True):
+		status = event[gameNum]["competitions"][0]["status"]["type"]["description"]
+	# Faster interval = more frequent data updates but higher risk of ESPN flagging activity as abnormal and blocking requests, total interval will be base + render, copy, and time it takes for SSH connection
+		baseInterval = 7
+		renderImage(gameNum)
+		runCommand("scp", assetPath + rendered, f"{ip}:~/")
+	# Does a full refresh every 10 updates to clear artifacting/ghosting that occurs on eink displays
+		command = f"/usr/sbin/eips -g {rendered}" if count%10 != 0 else f"/usr/sbin/eips -fg {rendered}"
+		runCommand("ssh", ip, command)
+		count += 1
+		if (status == "Final"):
+			print("Game over, exiting")
+			break
+		refreshData()
+	# I will probably update this later to calculate time until game start and sleep an appropriate amount of time (like 10-20 minute interval unless game starting soon)
+	# Either that or I'll write a handler/scheduler program, stay tuned to see which (exciting times fr, place your bets on Kalshi or Polymarket)!!!!!
+		if (status == "Scheduled"):
+			print("Game not started, sleeping for 2 minutes")
+			time.sleep(baseInterval * 20)
+		elif (status == "Halftime"):
+			print("Game in halftime, sleeping for 30 seconds")
+			time.sleep(baseInterval * 5)
+		else:
+			time.sleep(baseInterval)
 
-#In landscape, x=64 and y=29 are max coords for eips text drawing 
-
-#Old program (showed status of multiple games)
-#
-#writeQueue = []
-#
-#def queueLine(x, y, info):
-#	toAppend = f'/usr/sbin/eips {x} {y} "{info}"'
-#	writeQueue.append(toAppend)
-#
-#def textData():
-#	gAmount = (len(event))
-#	for i in range(gAmount):
-#		queueLine(3, 2+ i*3, game.getScore(i))
-#		queueLine(3, 2+ i*3 + 1, game.getLastPlay(i))
-#
-
-#runCommand('ssh', 'kindle', '/usr/sbin/eips -fc')
-
-#while True:
-#	textData()
-#	runCommand('ssh', 'kindle2', ";".join(writeQueue))
-#	runCommand('curl', "https://site.api.espn.com/apis/site/v2/sports/basketball/wnba/scoreboard", '--output', wnba)
-#	refreshData()
-#	writeQueue.clear()
-#	time.sleep(8)
+if __name__ == "__main__":
+	run()
