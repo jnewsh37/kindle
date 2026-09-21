@@ -3,17 +3,18 @@ import subprocess, time, json, sys
 from PIL import Image, ImageDraw, ImageFont
 
 scoreboardfile = "basketball.txt"
-try:
-	league = sys.argv[1]
-	gameNum = int(sys.argv[2])
-	ip = sys.argv[3]
+if __name__ == "__main__":
+	try:
+		league = sys.argv[1]
+		gameNum = int(sys.argv[2])
+		ip = sys.argv[3]
 
-except IndexError:
-	print("Run again with these 3 arguments: a league ESPN tracks (NBA, WNBA, FIBA, etc) in lowercase, the game number (starting at 0), and the IP of the target device (kindle, mrcooliothe67th@192.168.200.2, etc)")
-	sys.exit()
+	except IndexError:
+			print("Run again with these 3 arguments: a league ESPN tracks (NBA, WNBA, FIBA, etc) in lowercase, the game number (starting at 0), and the IP of the target device (kindle, mrcooliothe67th@192.168.200.2, etc)")
+			sys.exit()
+	assetPath = "./" if len(sys.argv) < 5 else sys.argv[4]
 
 # Path to the directory you would like all of the assets to be stored (will eventually utilized cached files, for now I'm wasting your storage cuz I feel like it :) )
-assetPath = "./" if len(sys.argv) < 5 else sys.argv[4]
 rendered = "render.png" 
 font = ImageFont.truetype("/System/Library/Fonts/Supplemental/Arial.ttf", 1)
 stats = []
@@ -24,6 +25,7 @@ awayIndex = []
 
 def runCommand(program, *params):
 	result = subprocess.run([program,*params], capture_output=True, text=True, encoding='utf-8', errors='replace', timeout=30)
+#	print(result.stderr)
 	return result.stdout
 
 def refreshData():
@@ -50,8 +52,6 @@ def refreshData():
 		awayIndex.append(tmpIndex)
 		e += 1
 
-refreshData()
-
 class Game:
 	def __init__(self, event):
 		self.event = event
@@ -60,7 +60,7 @@ class Game:
 		return f'{comp[awayIndex[g]["scoreboard"]]["score"]} - {comp[1 - awayIndex[g]["scoreboard"]]["score"]}'
 	def getLastPlay(self, g):
 		if ("situation" in event[g]["competitions"][0]):
-			lastPlay = event[g]["competitions"][0]["situation"]["lastPlay"]
+			lastPlay = event[g]["competitions"][0]["situation"].get("lastPlay", "")
 			athletes = lastPlay.get("athletesInvolved", [])
 			team = lastPlay.get("team", [])
 			player = athletes[0].get("id", "noAthlete") if athletes else "noAthlete"
@@ -110,14 +110,13 @@ def renderStats(x, y, g, t, cvs):
 	rawStats = stats[g]["teams"][t]["statistics"]
 	for s in rawStats:
 		teamStats[s["name"]] = s["displayValue"]
-	statsToRender = ["FG", "3FG", "FT", "AST", "REB", "TO", "STL", "BLK", "PFT", "PF"]
 	espnNames = {"FG": "fieldGoalsMade-fieldGoalsAttempted", "3FG": "threePointFieldGoalsMade-threePointFieldGoalsAttempted","FT": "freeThrowsMade-freeThrowsAttempted","AST": "assists","REB": "totalRebounds","TO": "turnovers","STL": "steals","BLK": "blocks","PFT": "turnoverPoints","PF": "fouls",}
-	spacing=0
+	spacing = 0
 	row = 0
 	for i in range(10):
-		statValue = teamStats.get(espnNames[statsToRender[i]], "0")
+		statValue = teamStats.get(list(espnNames.values())[i], "0")
 		fontSize(18)
-		draw.text((x + spacing, y + (row * 85) + 32), statsToRender[i], font=font)
+		draw.text((x + spacing, y + (row * 85) + 32), list(espnNames.keys())[i], font=font)
 		fontSize(28)
 		draw.text((x + spacing, y + (row * 85)), statValue, font=font)
 		if ('-' in statValue):
@@ -227,13 +226,14 @@ def renderImage(g):
 	renderLeaders(430, 465, g, 1-awayIndex[g]["leaders"], screen)
 
 	#You're not going to believe what this does
-	screen.save(f"render.png")
+	screen.save(assetPath + f"render.png")
 
-def run():
-	global gameNum
+def run(gameNum, assetPath):
+	gameNum
 	if (gameNum > len(event)-1 or gameNum < 0):
 		print(f"Invalid game selection, there are {len(event)} games in this league today. Defaulting to 0")
 		gameNum = 0
+	runCommand('ssh', ip, 'lipc-set-prop com.lab126.winmgr orientationLock R')
 	runCommand('ssh', ip, '/usr/sbin/eips -fc')
 	count = 0
 	print(event[gameNum]["name"])
@@ -263,4 +263,5 @@ def run():
 			time.sleep(baseInterval)
 
 if __name__ == "__main__":
-	run()
+	refreshData()
+	run(gameNum, assetPath)
