@@ -1,6 +1,7 @@
 #! /usr/bin/env python3 
 import subprocess, time, json, sys
 from PIL import Image, ImageDraw, ImageFont
+from pathlib import Path
 
 scoreboardfile = "basketball.txt"
 if __name__ == "__main__":
@@ -12,9 +13,11 @@ if __name__ == "__main__":
 	except IndexError:
 			print("Run again with these 3 arguments: a league ESPN tracks (NBA, WNBA, FIBA, etc) in lowercase, the game number (starting at 0), and the IP of the target device (kindle, mrcooliothe67th@192.168.200.2, etc)")
 			sys.exit()
-	assetPath = "./" if len(sys.argv) < 5 else sys.argv[4]
 
-# Path to the directory you would like all of the assets to be stored (will eventually utilized cached files, for now I'm wasting your storage cuz I feel like it :) )
+# This is very bum and could be handled much more efficiently and neatly using the Path library, oh well!
+	assetPath = "./" if len(sys.argv) < 5 else sys.argv[4] if str(sys.argv[4])[len(sys.argv[4])-1] == "/" else sys.argv[4] + "/"
+
+# Path to the directory you would like all of the assets to be cached
 rendered = "render.png" 
 font = ImageFont.truetype("/System/Library/Fonts/Supplemental/Arial.ttf", 1)
 stats = []
@@ -27,6 +30,28 @@ def runCommand(program, *params):
 	result = subprocess.run([program,*params], capture_output=True, text=True, encoding='utf-8', errors='replace', timeout=30)
 #	print(result.stderr)
 	return result.stdout
+
+def asyncCommand(program, *params):
+	result = subprocess.Popen([program,*params])
+#	print(result.stderr)
+	return result.stdout
+
+def cacheManager(url):
+	fileName = "tmp.png"
+	urlList = url.split("/")
+	for segment in urlList:
+		if ".png" in segment:
+			fileName = segment
+
+	if (fileName != "tmp.png" and Path(assetPath + fileName).is_file()):
+		print("Image found in cache")
+		imgPath = assetPath + fileName
+	else:
+		print(f"Image not cached, downloading and saving to cache in {assetPath}")
+		runCommand("curl", url, "--output", assetPath + fileName)
+		imgPath = assetPath + fileName
+
+	return imgPath
 
 def refreshData():
 	runCommand("curl", f"https://site.api.espn.com/apis/site/v2/sports/basketball/{league}/scoreboard", "--output", assetPath + scoreboardfile)
@@ -82,17 +107,14 @@ def fontSize(f):
 	font = ImageFont.truetype("/System/Library/Fonts/Supplemental/Arial.ttf", f)
 
 def pasteImage(x, y, size, cvs, url):
-	runCommand("curl", url, "--output", "tmp.png")
-	with Image.open("tmp.png") as img:
+	fileName = cacheManager(url)
+	with Image.open(fileName) as img:
 		img = img.resize((size,size))
 		cvs.paste(img, (x, y), img)
 
 def pbpIcon(x, y, size, cvs, url, width, fill):
-	if (url != "default.png"):
-		runCommand("curl", url, "--output", assetPath + "tmp.png")
-		imgPath = assetPath + "tmp.png"
-	else:
-		imgPath = url
+	imgPath = cacheManager(url)
+	
 	with Image.open(imgPath) as img:
 		background = Image.new("L", (size, size), fill)
 		ar = img.width/img.height
