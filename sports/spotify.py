@@ -34,23 +34,34 @@ def fontSize(f):
 def pullLyrics(name, artist) -> list:
      return str(syncedlyrics.search(f"[{artist}] [{name}]")).split("\n")
 
-def getLyrics(lyrics, position):
-    lyricsList = lyrics
-    lyricsDict = {}
-    for l in lyricsList:
-         lyricsDict[str(l)[1:9]] = str(l)[11:(len(l))]   
-    times = list(lyricsDict.keys())
-    delta = -1
+def getLyrics(lyrics, position, offset=None, parsed=False):
+    if not parsed:
+        lyricsList = lyrics
+        while ":" not in lyricsList[-1]:
+            print(lyricsList.pop(-1))
+        lyricsDict = {}
+        for l in lyricsList:
+            lyricsDict[str(l)[1:9]] = str(l)[11:(len(l))]   
+        times = list(lyricsDict.keys())
+        delta = -1
+        lPos = ""
     for t in times:
         tList = t.split(":")
         newT = (int(tList[0])*60 + int(float(tList[1])))*1000
         if (abs(newT-position)<delta or delta == -1):
             line = lyricsDict[t]
             delta = abs(newT-position)
-        t = newT
+            lPos = t
 
-    if delta >= 0:
-         return line
+    lyricsToEnd = []
+
+    if (delta >= 0) and not offset:
+         if (times.index(lPos) == 0):
+            return (line, "***", lyricsDict[times[times.index(lPos)+1]])
+         elif (times.index(lPos) == len(times)-1):
+              return (line, lyricsDict[times[times.index(lPos)-1]], "***")
+         else:
+              return (line, lyricsDict[times[times.index(lPos)-1]], lyricsDict[times[times.index(lPos)+1]])
     else:
          return "***"  
 
@@ -67,21 +78,22 @@ def renderPlaying(client:spotipy.Spotify):
     runCommand("curl", coverURL, "--output", cover)
 
     lyrics = pullLyrics(name, artists[0])
-    currentLine = getLyrics(lyrics, progress)
+    currentLine, lastLine, nextLine = getLyrics(lyrics, progress)
 
     screen = Image.new("L", (800,600), 255)
     draw = ImageDraw.Draw(screen)
-    imgSize = 300
+    imgSize = 150
     pasteImage(50, 50, imgSize, screen, cover)
     fontSize(30)
     draw.text((100+imgSize, 100), name,font=font)
     fontSize(20)
-    draw.text((100+imgSize, 150), artists[0],font=font)
+    draw.text((100+imgSize, 150), ", ".join(artists),font=font)
 
     if len(currentLine) > 30:
          currentLine = f"{currentLine[0:30]}\n{currentLine[30:len(currentLine)]}"
     fontSize(50)
     draw.text((50, 100+imgSize), currentLine, font=font)
+    draw.text((50, 150+50*int(len(currentLine)/34)+imgSize), nextLine, fill=150, font=font)
 
 # Progress bar
     draw.line((150, 550, 700, 550), fill=100, width=10)
