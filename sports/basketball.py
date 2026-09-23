@@ -44,10 +44,10 @@ def cacheManager(url):
 			fileName = segment
 
 	if (fileName != "tmp.png" and Path(assetPath + fileName).is_file()):
-		print("Image found in cache")
+#		print(f"Image found in cache at {assetPath + fileName}")
 		imgPath = assetPath + fileName
 	else:
-		print(f"Image not cached, downloading and saving to cache in {assetPath}")
+#		print(f"Image not cached, downloading and saving to cache in {assetPath}")
 		runCommand("curl", url, "--output", assetPath + fileName)
 		imgPath = assetPath + fileName
 
