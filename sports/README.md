@@ -13,7 +13,6 @@ Higher refresh intervals run the risk of ESPN detecting abnormal activity and po
 IP-banning you from pulling data, currently at 7 seconds rest + render and scp time (like 9-10s)
 
 # To-do
-Utilize previously downloaded static assets such as player and team images instead of pulling every cycle
 Write an automated handler program or web UI so I don't gotta sit at my desk, log into my computer,
 open a terminal, and run the program by hand each and every time (so much work, I know)
 Rewrite most rendering functions to use dynamic spacing rather than relying on static coords
