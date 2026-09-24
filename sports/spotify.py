@@ -1,9 +1,9 @@
 #! /usr/bin/env python3
 
-import sys, syncedlyrics, subprocess, spotipy, time
-from spotipy.oauth2 import SpotifyOAuth, SpotifyPKCE
+import sys, syncedlyrics, spotipy, time
+from spotipy.oauth2 import SpotifyOAuth
 from PIL import Image, ImageDraw, ImageFont
-from datetime import timedelta, datetime
+from datetime import timedelta
 from basketball import runCommand
 
 scope = "user-read-currently-playing"
@@ -22,7 +22,6 @@ def create_spotify_client(id, secret) -> spotipy.Spotify:
 
 def pasteImage(x, y, size, cvs, url):
     with Image.open(url) as img:
-        print(img)
         img = img.resize((size,size))
         cvs.paste(img, (x, y))
 
@@ -35,8 +34,6 @@ def pullLyrics(name, artist):
      return str(syncedlyrics.search(f"[{artist}] [{name}]")).split("\n")
 
 def getLyrics(lyrics, position, parsed=False):
-    print(len(lyrics))
-    print(lyrics[0])
     lyricsToEnd = []
     delta = -1
     if not parsed and lyrics[0] != 'None':
@@ -45,7 +42,7 @@ def getLyrics(lyrics, position, parsed=False):
             print(lyricsList.pop(-1))
         lyricsDict = {}
         for l in lyricsList:
-            lyricsDict[str(l)[1:9]] = str(l)[11:(len(l))]   
+            lyricsDict[str(l)[1:9]] = str(l)[10:(len(l))]   
         times = list(lyricsDict.keys())
         lPos = ""
         for t in times:
@@ -61,7 +58,6 @@ def getLyrics(lyrics, position, parsed=False):
     if (delta >= 0 and len(lyricsToEnd) > 1):
         return(lyricsToEnd)
     else:
-        print("returning filler")
         lyricsToEnd = ["***", "***"]  
         return lyricsToEnd
 
@@ -69,6 +65,7 @@ def splitLines(line, maxLen):
     lineList = []
     while len(line) > maxLen:
         i = line.rfind(" ", 0, maxLen)
+        line = line[1:] if line[0] == "]" else line
         lineList.append(line[0:i])
         line = line[i+1:]
     lineList.append(line)
