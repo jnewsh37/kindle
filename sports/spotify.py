@@ -54,8 +54,8 @@ def getLyrics(lyrics, position, parsed=False):
                 lPos = t
         for l in times[times.index(lPos):]:
             lyricsToEnd.append(lyricsDict[l])
-
-    if (delta >= 0 and len(lyricsToEnd) > 1):
+    lyricsToEnd.extend(["***", "***"])
+    if (delta >= 0):
         return(lyricsToEnd)
     else:
         lyricsToEnd = ["***", "***"]  
@@ -63,20 +63,24 @@ def getLyrics(lyrics, position, parsed=False):
 
 def splitLines(line, maxLen):
     lineList = []
+    line = line.strip("]")
+    line = line.lstrip(" ")
     while len(line) > maxLen:
+        line = line.lstrip(" ")
+        line.lstrip("]")
         i = line.rfind(" ", 0, maxLen)
-        line = line[1:] if line[0] == "]" else line
         lineList.append(line[0:i])
         line = line[i+1:]
     lineList.append(line)
     return "\n".join(lineList)
 
-def renderPlaying(client:spotipy.Spotify, lyrics, name, artists, coverURL, cover, progress, length):
-        runCommand("curl", coverURL, "--output", cover)
+def renderPlaying(client:spotipy.Spotify, lyrics, name, artists, cover, progress, length):
         lyricsList = getLyrics(lyrics, progress)
         lyricsList = [splitLines(l, 30) for l in lyricsList]
         screen = Image.new("L", (800,600), 255)
         draw = ImageDraw.Draw(screen)
+
+        #Song info
         imgSize = 150
         pasteImage(50, 50, imgSize, screen, cover)
         fontSize(30)
@@ -84,29 +88,34 @@ def renderPlaying(client:spotipy.Spotify, lyrics, name, artists, coverURL, cover
         fontSize(20)
         draw.text((100+imgSize, 150), ", ".join(artists),font=font)
 
+        # Lyrics
         fontSize(50)
         draw.text((50, 80+imgSize), lyricsList[0], font=font)
-        draw.text((50, 130+50*lyricsList[0].count("\n")+imgSize), lyricsList[1], fill=150, font=font)
+        if lyricsList[0].count("\n") + lyricsList[1].count("\n") < 5:
+            draw.text((50, 130+50*lyricsList[0].count("\n")+imgSize), lyricsList[1], fill=150, font=font)
 
-    # Progress bar
-        draw.line((150, 550, 700, 550), fill=100, width=10)
-        draw.line((150, 550, 150+(progress/length*550), 550), fill=0, width=10)
+        # Progress bar
+        draw.line((150, 565, 700, 565), fill=100, width=10)
+        draw.line((150, 565, 150+(progress/length*550), 565), fill=0, width=10)
         fontSize(25)
-        draw.text((110, 550), ((str(timedelta(milliseconds=progress))[2:7])), font=font, align="center", anchor="mm")
+        draw.text((110, 565), ((str(timedelta(milliseconds=progress))[2:7])), font=font, align="center", anchor="mm")
 
-        screen.save("SpotifyTest.png")
-        print(f"Song: {name}\nArtists: {artists}\nCover image URL: {coverURL}\nProgress: {int(progress/60000)}:{int((progress%60000)/1000)}\nCurrent lyrics: {lyricsList[0]}")
+        screen.save("render.png")
+        print(f"Current lyrics: {lyricsList[0]}")
 
-if __name__ == "__main__":
+def run():
     client = create_spotify_client(sys.argv[1], sys.argv[2])
     ip = sys.argv[3]
     data = client.currently_playing()
     currentName = ""
-    count=0
+    count = 0
+    avgTime = 0
     if data != None:
         while True:
+            print("\033[H\033[J", end="")
             name = data["item"]["name"]
             data = client.currently_playing()
+            print("Refreshing Spotify API data...")
             progress = data["progress_ms"]
             if currentName != name:
                 artists = []
@@ -116,13 +125,26 @@ if __name__ == "__main__":
                 length = data["item"]["duration_ms"]
                 coverURL = str(data["item"]["album"]["images"][0]["url"])
                 cover = (coverURL.split("/"))[-1] + ".jpeg"
+                runCommand("curl", coverURL, "--output", cover)
+
+                print("Waiting for lyric refresh...")
                 lyrics = pullLyrics(name, artists[0])
+                print(f"Song: {name}\nArtists: {artists}\nCover image URL: {coverURL}\nProgress: {str(timedelta(milliseconds=progress))[2:7]}\n")
             currentName = name
-            renderPlaying(client, lyrics, name, artists, coverURL, cover, progress, length)
-            runCommand("scp", "SpotifyTest.png", f"{ip}:~/")
+            print("Rendering...")
+            renderPlaying(client, lyrics, name, artists, cover, progress, length)
+            print("Copying...")
+            copyTime = time.perf_counter()
+            runCommand("scp", "render.png", f"{ip}:~/")
             if count%20 == 0:
-                runCommand("ssh", ip, "/usr/sbin/eips -fg ~/SpotifyTest.png")
+                runCommand("ssh", ip, "/usr/sbin/eips -fg ~/render.png")
             else:
-                runCommand("ssh", ip, "/usr/sbin/eips -g ~/SpotifyTest.png")
-            count+=1
-            time.sleep(2)
+                runCommand("ssh", ip, "/usr/sbin/eips -g ~/render.png")
+            copyTime = time.perf_counter() - copyTime
+            avgTime = (avgTime * count + copyTime)/(count+1)
+            count += 1
+            print(f"Time to copy and display: {copyTime}\nAverage time: {avgTime}")
+            (print("Sleeping..."), time.sleep(2 - avgTime)) if avgTime < 2 else print("Behind, skipping sleep")
+
+if __name__ == "__main__":
+    run()
