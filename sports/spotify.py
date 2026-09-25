@@ -11,13 +11,10 @@ redirect = "http://127.0.0.1:8888/callback"
 
 # Creates a spotipy.Spotify client
 def create_spotify_client(id, secret) -> spotipy.Spotify:
-    ("Authenticating using OAuth")
+    print("Authenticating using OAuth")
     auth_manager = SpotifyOAuth(client_id=id, client_secret=secret, redirect_uri=redirect, scope=scope)
-
     auth_manager.get_cached_token()
-
     client = spotipy.Spotify(auth_manager=auth_manager)
-
     return client
 
 def pasteImage(x, y, size, cvs, url):
@@ -80,7 +77,7 @@ def renderPlaying(client:spotipy.Spotify, lyrics, name, artists, cover, progress
         screen = Image.new("L", (800,600), 255)
         draw = ImageDraw.Draw(screen)
 
-        #Song info
+        # Song info
         imgSize = 150
         pasteImage(50, 50, imgSize, screen, cover)
         fontSize(30)
@@ -100,6 +97,7 @@ def renderPlaying(client:spotipy.Spotify, lyrics, name, artists, cover, progress
         fontSize(25)
         draw.text((110, 565), ((str(timedelta(milliseconds=progress))[2:7])), font=font, align="center", anchor="mm")
 
+        # Saves render + prints current lyrics
         screen.save("render.png")
         print(f"Current lyrics: {lyricsList[0]}")
 
@@ -112,12 +110,14 @@ def run():
     avgTime = 0
     if data != None:
         while True:
+            # Clears terminal and refreshes some data (abstains from refreshing lyrics and cover art until necessary since those are slower)
             print("\033[H\033[J", end="")
             name = data["item"]["name"]
             data = client.currently_playing()
             print("Refreshing Spotify API data...")
             progress = data["progress_ms"]
             if currentName != name:
+                # Refresh Spotify and lyrical data if song name different
                 artists = []
                 for artist in data["item"]["artists"]:
                     artists.append(artist["name"])
@@ -126,7 +126,6 @@ def run():
                 coverURL = str(data["item"]["album"]["images"][0]["url"])
                 cover = (coverURL.split("/"))[-1] + ".jpeg"
                 runCommand("curl", coverURL, "--output", cover)
-
                 print("Waiting for lyric refresh...")
                 lyrics = pullLyrics(name, artists[0])
                 print(f"Song: {name}\nArtists: {artists}\nCover image URL: {coverURL}\nProgress: {str(timedelta(milliseconds=progress))[2:7]}\n")
@@ -136,10 +135,14 @@ def run():
             print("Copying...")
             copyTime = time.perf_counter()
             runCommand("scp", "render.png", f"{ip}:~/")
+            
+            # Full refreshes kindle's eink screen every 20 renders (to prevent ghosting and artifacting from compounding too much)
             if count%20 == 0:
                 runCommand("ssh", ip, "/usr/sbin/eips -fg ~/render.png")
             else:
                 runCommand("ssh", ip, "/usr/sbin/eips -g ~/render.png")
+
+            # Calculates copy and display times and dynamically sleeps to try to hit refresh interval target
             copyTime = time.perf_counter() - copyTime
             avgTime = (avgTime * count + copyTime)/(count+1)
             count += 1
