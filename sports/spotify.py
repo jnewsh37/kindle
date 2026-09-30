@@ -51,7 +51,7 @@ def getLyrics(lyrics, position:timedelta, parsed=False):
             newT = toSeconds(t)
             if (newT < position):
                 lPos = t
-                if (i+1 <= len(times)):
+                if (i+1 < len(times)):
                     delt = toSeconds(times[i+1]) - newT
         if lPos in times:
             for l in times[times.index(lPos):]:
@@ -158,7 +158,7 @@ def run():
             delay = timedelta(seconds=avgTime)
             refresh += 1
             print(f"Time to copy and display: {copyTime}\nAverage time: {avgTime}")
-            (print(f"Sleeping for {rest}..."), time.sleep(rest - avgTime)) if avgTime < rest else print("Behind, skipping sleep")
+            (print(f"Sleeping for {rest-avgTime}..."), time.sleep(rest - avgTime)) if avgTime < rest else print("Behind, skipping sleep")
 
 if __name__ == "__main__":
     run()
