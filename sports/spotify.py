@@ -30,9 +30,13 @@ def fontSize(f):
 def pullLyrics(name, artist):
      return str(syncedlyrics.search(f"[{artist}] [{name}]")).split("\n")
 
-def getLyrics(lyrics, position, parsed=False):
+def toSeconds(t):
+    tList = t.split(":")
+    return (int(tList[0])*60 + int(float(tList[1])))
+
+def getLyrics(lyrics, position:timedelta, parsed=False):
     lyricsToEnd = []
-    delta = -1
+    position = position.total_seconds()
     if not parsed and lyrics[0] != 'None':
         lyricsList = lyrics
         while ":" not in lyricsList[-1]:
@@ -42,21 +46,19 @@ def getLyrics(lyrics, position, parsed=False):
             lyricsDict[str(l)[1:9]] = str(l)[10:(len(l))]   
         times = list(lyricsDict.keys())
         lPos = ""
-        for t in times:
-            tList = t.split(":")
-            newT = (int(tList[0])*60 + int(float(tList[1])))*1000
-            if (abs(newT-position)<delta or delta == -1):
-                line = lyricsDict[t]
-                delta = abs(newT-position)
+        delt = 0.0
+        for i,t in enumerate(times):
+            newT = toSeconds(t)
+            if (newT < position):
                 lPos = t
-        for l in times[times.index(lPos):]:
-            lyricsToEnd.append(lyricsDict[l])
-    lyricsToEnd.extend(["***", "***"])
-    if (delta >= 0):
-        return(lyricsToEnd)
-    else:
-        lyricsToEnd = ["***", "***"]  
-        return lyricsToEnd
+                if (i+1 <= len(times)):
+                    delt = toSeconds(times[i+1]) - newT
+        if lPos in times:
+            for l in times[times.index(lPos):]:
+                lyricsToEnd.append(lyricsDict[l])
+        lyricsToEnd.extend(["***", "***"])
+    return(lyricsToEnd, delt)
+
 
 def splitLines(line, maxLen):
     lineList = []
@@ -71,9 +73,10 @@ def splitLines(line, maxLen):
     lineList.append(line)
     return "\n".join(lineList)
 
-def renderPlaying(client:spotipy.Spotify, lyrics, name, artists, cover, progress, length):
-        lyricsList = getLyrics(lyrics, progress)
+def renderPlaying(client:spotipy.Spotify, lyrics, name, artists, cover, progress:timedelta, delay, length):
+        lyricsList, rest = getLyrics(lyrics, progress+delay)
         lyricsList = [splitLines(l, 30) for l in lyricsList]
+        progress = progress.total_seconds() * 1000
         screen = Image.new("L", (800,600), 255)
         draw = ImageDraw.Draw(screen)
 
@@ -100,14 +103,17 @@ def renderPlaying(client:spotipy.Spotify, lyrics, name, artists, cover, progress
         # Saves render + prints current lyrics
         screen.save("render.png")
         print(f"Current lyrics: {lyricsList[0]}")
+        return rest
 
 def run():
     client = create_spotify_client(sys.argv[1], sys.argv[2])
     ip = sys.argv[3]
     data = client.currently_playing()
     currentName = ""
-    count = 0
+    refresh = 0
+    delays = []
     avgTime = 0
+    delay = timedelta(seconds=0)
     if data != None:
         while True:
             # Clears terminal and refreshes some data (abstains from refreshing lyrics and cover art until necessary since those are slower)
@@ -115,39 +121,44 @@ def run():
             name = data["item"]["name"]
             data = client.currently_playing()
             print("Refreshing Spotify API data...")
-            progress = data["progress_ms"]
+            progress = timedelta(milliseconds=data["progress_ms"])
             if currentName != name:
                 # Refresh Spotify and lyrical data if song name different
                 artists = []
                 for artist in data["item"]["artists"]:
                     artists.append(artist["name"])
-                progress = data["progress_ms"]
+                progress = timedelta(milliseconds=data["progress_ms"])
                 length = data["item"]["duration_ms"]
                 coverURL = str(data["item"]["album"]["images"][0]["url"])
                 cover = (coverURL.split("/"))[-1] + ".jpeg"
                 runCommand("curl", coverURL, "--output", cover)
                 print("Waiting for lyric refresh...")
                 lyrics = pullLyrics(name, artists[0])
-                print(f"Song: {name}\nArtists: {artists}\nCover image URL: {coverURL}\nProgress: {str(timedelta(milliseconds=progress))[2:7]}\n")
+                print(f"Song: {name}\nArtists: {artists}\nCover image URL: {coverURL}\nProgress: {str(progress)[2:7]}\n")
             currentName = name
             print("Rendering...")
-            renderPlaying(client, lyrics, name, artists, cover, progress, length)
+            rest = renderPlaying(client, lyrics, name, artists, cover, progress, delay, length)
+            rest = 4 if rest > 4 else rest
             print("Copying...")
             copyTime = time.perf_counter()
             runCommand("scp", "render.png", f"{ip}:~/")
             
             # Full refreshes kindle's eink screen every 20 renders (to prevent ghosting and artifacting from compounding too much)
-            if count%20 == 0:
+            if refresh%10 == 0:
                 runCommand("ssh", ip, "/usr/sbin/eips -fg ~/render.png")
             else:
                 runCommand("ssh", ip, "/usr/sbin/eips -g ~/render.png")
 
             # Calculates copy and display times and dynamically sleeps to try to hit refresh interval target
             copyTime = time.perf_counter() - copyTime
-            avgTime = (avgTime * count + copyTime)/(count+1)
-            count += 1
+            delays.append(copyTime)
+            if len(delays) > 5:
+                del delays[0]
+            avgTime = sum(delays)/len(delays)
+            delay = timedelta(seconds=avgTime)
+            refresh += 1
             print(f"Time to copy and display: {copyTime}\nAverage time: {avgTime}")
-            (print("Sleeping..."), time.sleep(2 - avgTime)) if avgTime < 2 else print("Behind, skipping sleep")
+            (print(f"Sleeping for {rest}..."), time.sleep(rest - avgTime)) if avgTime < rest else print("Behind, skipping sleep")
 
 if __name__ == "__main__":
     run()
