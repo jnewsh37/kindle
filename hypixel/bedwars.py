@@ -109,14 +109,16 @@ def renderStats(x, y, w, h, lines, hypixelData, statsToRender, statsDict, cvs):
 		if (len(s) > longestKey):
 			longestKey = len(s)
 	print(longestKey)
-	if (2*.35*maxSize*longestKey > w):
-		maxSize = int((w/(2*longestKey))/.25)
+	perRow = int((len(statsToRender)+1)/lines) if lines != 1 else int((len(statsToRender))/lines)
+	print(perRow)
+	if (1.2*perRow*.35*maxSize*longestKey > w):
+		maxSize = int((w/(perRow*longestKey*1.2))/.15)
 	print(maxSize)
 	for i in range(len(statsToRender)):
 		fontSize(int(.35*maxSize))
-		draw.text(((x+(i%2)*int(w/2)), y+(maxSize+10)*int(i/lines)), statsToRender[i], font=font)
+		draw.text(((x+int(i%perRow)*int(w/perRow)), y+(maxSize+10)*int(i/perRow)), statsToRender[i], font=font)
 		fontSize(int(.55*maxSize))
-		draw.text(((x+int(i%2)*int(w/2)), y+(maxSize+10)*int(i/lines)+int(.35*maxSize)), str(hypixelData["player"]["stats"]["Bedwars"]["eight_one_"+statsDict[statsToRender[i]]]), font=font)
+		draw.text(((x+int(i%perRow)*int(w/perRow)), y+(maxSize+10)*int(i/perRow)+int(.35*maxSize)), str(hypixelData["player"]["stats"]["Bedwars"]["eight_one_"+statsDict[statsToRender[i]]]), font=font)
 
 def render(hypixelData):
 	screen = Image.new("L", (800,600), 255)
@@ -124,11 +126,19 @@ def render(hypixelData):
 	skin = renderUserSkin(sys.argv[2])
 	fontSize(60)
 	draw.text((400,40), "Bedwars Stats Tracker", font=font, alight="center", anchor="mm")
-	screen.paste(skin, (10,70), skin)
-	renderStats(250,70,550,300,2,hypixelData, ["Kills", "Final Kills"], bedwarsStats, screen)
-	screen.save("testrender.png")
+	screen.paste(skin, (10,80), skin)
+	renderStats(250,80,520,100,1,hypixelData, ["Kills", "Deaths", "Combat Deaths", "Combat Kills"], bedwarsStats, screen)
+	renderStats(250,180,520,300,2,hypixelData, ["Final Kills", "Wins", "Beds Broken", "Games Played"], bedwarsStats, screen)
+	screen.save("render.png")
 
 print(f"API Key: {sys.argv[1]}\nUUID: {sys.argv[2]}")
 hypixelData = getHypixelStats(hypixel, sys.argv[1], sys.argv[2]).json()
 #renderUserSkin(sys.argv[2])
+
+def runCommand(program, *params):
+	result = subprocess.run([program,*params], capture_output=True, text=True, encoding='utf-8', errors='replace', timeout=30)
+#	print(result.stderr)
+	return result.stdout
 render(hypixelData)
+runCommand("scp", "render.png", f"kindle3:~/")
+runCommand("ssh", "kindle3", "/usr/sbin/eips -g ~/render.png")
